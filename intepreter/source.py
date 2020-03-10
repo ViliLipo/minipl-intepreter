@@ -16,17 +16,15 @@ class Source:
             self.columnNumber = 0
 
     def eof(self):
-        return (self.rowNumber >= len(self.lines)
-                or (self.rowNumber == len(self.lines) - 1
-                    and
-                    self.columnNumber == len(self.lines[self.rowNumber]) - 1))
+        return self.rowNumber >= len(self.lines)
 
     def getChar(self):
-        self.handleLine()
         if self.eof():
+            print(self.getCurrentPosition())
             return False
         char = self.lines[self.rowNumber][self.columnNumber]
         self.columnNumber = self.columnNumber + 1
+        self.handleLine()
         return char
 
     def peek(self):
@@ -41,7 +39,16 @@ class Source:
             return False
 
     def getCurrentPosition(self):
-        return (self.columnNumber, self.rowNumber + 1)
+        return (self.columnNumber + 1, self.rowNumber + 1)
+
+    def reverseOnePosition(self):
+        if (self.columnNumber == 0 and self.rowNumber == 0):
+            return
+        elif self.columnNumber == 0:
+            self.rowNumber = self.rowNumber - 1
+            self.columnNumber = len(self.lines[self.rowNumber]) - 1
+        else:
+            self.columnNumber = self.columnNumber - 1
 
     def setCurrentPosition(self, column, row):
         self.columnNumber = column - 1

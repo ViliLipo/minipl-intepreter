@@ -1,3 +1,5 @@
+from intepreter.ast import makeNode
+
 
 class Parser:
 
@@ -5,104 +7,182 @@ class Parser:
         self.scanner = scanner
         self.nextToken()
         self.errors = []
+        self.statementVariants = [
+                self.assignStatement,
+                self.assertStatement,
+                self.declarationStatement,
+                self.printStatement,
+                self.forStatement,
+                self.readStatement,
+                ]
+
+    operators = ['+', '-', '/', '*', '&', '|', '=']
 
     def nextToken(self):
         self.symbol = self.scanner.scanNextToken()
 
     def match(self, typeString):
         if self.symbol.tokenType == typeString:
+            node = makeNode(self.symbol)
             self.nextToken()
-            return True
+            return node
         else:
             print('Expected {}, got {}'.format(
                 typeString, self.symbol.tokenType))
-            return False
+            return None
 
     def matchOperator(self):
-        if self.symbol.tokenType in ['+', '-', '/', '*', '&', '|']:
+        if self.symbol.tokenType in Parser.operators:
+            node = makeNode(self.symbol)
             self.nextToken()
-            return True
+            return node
         else:
             print('Expected operator, got {}'.format(
                 self.symbol.tokenType))
-            self.nextToken()
-            return False
+            return None
 
     def matchType(self):
         if self.symbol.tokenType in ['int', 'string', 'bool']:
+            node = makeNode(self.symbol)
             self.nextToken()
-            return True
+            return node
         else:
-            return False
+            return None
 
     def program(self):
+        stmntlist = []
         while self.symbol.tokenType != "eof":
-            self.statement()
+            stmntlist.append(self.statement())
+        for stmnt in stmntlist:
+            print(stmnt)
         else:
             print('end of file')
 
     def statement(self):
-        tokenType = self.symbol.tokenType
-        if tokenType == 'identifier':
-            self.nextToken()
-            self.match(':=')
-            self.expression()
-            self.match(';')
-        elif tokenType == 'read':
-            self.nextToken()
-            self.match('identifier')
-            self.match(';')
-        elif tokenType == 'print':
-            self.nextToken()
-            self.expression()
-            self.match(';')
-        elif tokenType == 'assert':
-            self.nextToken()
-            self.expression()
-            self.match(';')
-        elif tokenType == 'var':
-            self.nextToken()
-            self.match('identifier')
-            self.match(':')
-            self.matchType()
-            if self.symbol.tokenType == ':=':
-                self.nextToken()
-                self.expression()
-            self.match(';')
-        elif tokenType == 'for':
-            self.nextToken()
-            self.match('identifier')
-            self.match('in')
-            self.expression()
-            self.match('..')
-            self.expression()
-            self.match('do')
-            while not self.symbol.tokenType == 'end':
-                self.statement()
-            self.match('end')
-            self.match('for')
+        node = False
+        for stmnt in self.statementVariants:
+            node = stmnt()
+            if node:
+                return node
         else:
             print("statement cant start with lexeme {}".format(self.symbol))
 
+    def assignStatement(self):
+        tokenType = self.symbol.tokenType
+        if tokenType == 'identifier':
+            lhs = makeNode(self.symbol)
+            self.nextToken()
+            node = self.match(':=')
+            rhs = self.expression()
+            node.addChild(lhs)
+            node.addChild(rhs)
+            self.match(';')
+            return node
+        else:
+            return False
+
+    def forStatement(self):
+        tokenType = self.symbol.tokenType
+        if tokenType == 'for':
+            node = makeNode(self.symbol)
+            self.nextToken()
+            variable = self.match('identifier')
+            condition = self.match('in')
+            lhs = self.expression()
+            ran = self.match('..')
+            rhs = self.expression()
+            ran.addChild(lhs)
+            ran.addChild(rhs)
+            condition.addChild(variable)
+            condition.addChild(ran)
+            node.addChild(condition)
+            body = self.match('do')
+            node.addChild(body)
+            while not self.symbol.tokenType == 'end':
+                body.addChild(self.statement())
+            self.match('end')
+            self.match('for')
+            self.match(';')
+            return node
+        else:
+            return False
+
+    def declarationStatement(self):
+        tokenType = self.symbol.tokenType
+        if tokenType == 'var':
+            node = makeNode(self.symbol)
+            self.nextToken()
+            node.addChild(self.match('identifier'))
+            self.match(':')
+            node.addChild(self.matchType())
+            if self.symbol.tokenType == ':=':
+                assign = makeNode(self.symbol)
+                self.nextToken()
+                node.addChild(assign)
+                assign.addChild(self.expression())
+            self.match(';')
+            return node
+        else:
+            return False
+
+    def assertStatement(self):
+        tokenType = self.symbol.tokenType
+        if tokenType == 'assert':
+            node = makeNode(self.symbol)
+            self.nextToken()
+            node.addChild(self.expression())
+            self.match(';')
+            return node
+        else:
+            return False
+
+    def readStatement(self):
+        tokenType = self.symbol.tokenType
+        if tokenType == 'read':
+            node = makeNode(self.symbol)
+            self.nextToken()
+            self.match('identifier')
+            self.match(';')
+            return node
+        else:
+            return False
+
+    def printStatement(self):
+        tokenType = self.symbol.tokenType
+        if tokenType == 'print':
+            node = makeNode(self.symbol)
+            self.nextToken()
+            node.addChild(self.expression())
+            self.match(';')
+            return node
+        else:
+            return False
+
     def expression(self):
-        self.operand()
-        self.operation()
-        self.operand()
+        lhs = self.operand()
+        if self.symbol.tokenType in Parser.operators:
+            node = self.operation()
+            rhs = self.operand()
+            node.addChild(lhs)
+            node.addChild(rhs)
+            return node
+        else:
+            return lhs
 
     def operand(self):
         tokenType = self.symbol.tokenType
-        if tokenType == 'integer':
-            self.nextToken()
-        elif tokenType == 'string':
-            self.nextToken()
-        elif tokenType == 'identifier':
+        node = None
+        if tokenType in ['integer', 'string', 'identifier']:
+            node = makeNode(self.symbol)
             self.nextToken()
         elif tokenType == '(':
             self.nextToken()
-            self.expression()
+            node = self.expression()
             self.match(')')
         else:
             print("operand can't be {}".format(self.symbol))
+        return node
 
     def operation(self):
-        self.matchOperator()
+        node = self.matchOperator()
+        return node

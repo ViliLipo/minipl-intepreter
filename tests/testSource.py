@@ -14,19 +14,21 @@ class TestSourceMethods(unittest.TestCase):
 
     def testGetPos(self):
         src = Source('./tests/test.minipl')
+        self.assertEqual(src.getCurrentPosition(), (1, 1))
         src.getChar()
         src.getChar()
-        self.assertEqual(src.getCurrentPosition(), (2, 1))
+        self.assertEqual(src.getCurrentPosition(), (3, 1))
         src.rowNumber = 1
         src.columnNumber = 0
-        src.getChar()
         self.assertEqual(src.getCurrentPosition(), (1, 2))
 
     def testEof(self):
         src = Source('./tests/test.minipl')
-        src.columnNumber = 1000
-        src.rowNumber = len(src.lines) - 1
-        self.assertEqual(src.getChar(), False)
+        src.setCurrentPosition(9, 23)
+        print(src.getCurrentPosition())
+        print(src.getChar())
+        print(src.getCurrentPosition())
+        self.assertTrue(src.eof())
 
 
 if __name__ == '__main__':

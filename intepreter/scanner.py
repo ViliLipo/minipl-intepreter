@@ -7,10 +7,12 @@ class Token:
         self.endposition = endposition
         self.startposition = startposition
 
+    def __str__(self):
+        return 'Type:{}, Lexeme: {}'\
+            .format(self.tokenType, self.lexeme)
+
     def __repr__(self):
-        return 'Type:{}, Lexeme: {}, startposition: {}, endposition: {}'\
-            .format(self.tokenType, self.lexeme,
-                    self.startposition, self.endposition)
+        return self.__str__()
 
 
 class Scanner:
@@ -28,14 +30,15 @@ class Scanner:
             Scanner.scanSemicolon,
             Scanner.scanColonOrIdent,
             Scanner.scanBrackets,
+            Scanner.scanRange,
         ]
 
     def scanNextToken(self):
         position = self.src.getCurrentPosition()
         errortoken = Token('error', '', position, position)
+        self.screenWhiteSpace()
         if self.src.eof():
             return Token('eof', '', position, position)
-        self.screenWhiteSpace()
         position = self.src.getCurrentPosition()
         for func in self.scanFuncs:
             possibleToken = func(self.src)
@@ -44,7 +47,7 @@ class Scanner:
         return errortoken
 
     def screenWhiteSpace(self):
-        while (self.src.peek() is not False and self.src.peek().isspace()):
+        while (self.src.peek() in [' ', '\t', '\n']):
             self.src.getChar()
 
     def scanNumber(src):
@@ -61,8 +64,8 @@ class Scanner:
             if src.peek() == '.':
                 lookAhead = src.getChar()
                 if src.peek() == '.':
-                    row, column = src.getCurrentPosition()
-                    src.setCurrentPosition(column - 2, row)
+                    column, row = src.getCurrentPosition()
+                    src.reverseOnePosition()
                     return Token('integer', lexeme,
                                  startPos, src.getCurrentPosition())
                 lexeme = lexeme + lookAhead
