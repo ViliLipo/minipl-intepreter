@@ -159,6 +159,12 @@ class Parser:
             return False
 
     def expression(self):
+        if self.symbolIsUnary():
+            node = makeNode(self.symbol)
+            self.nextToken()
+            rhs = self.operand
+            node.addChild(rhs)
+            return node
         lhs = self.operand()
         if self.symbol.tokenType in Parser.operators:
             node = self.operation()
@@ -186,3 +192,7 @@ class Parser:
     def operation(self):
         node = self.matchOperator()
         return node
+
+    def symbolIsUnary(self):
+        return self.symbol.tokenType == '!'
+    
