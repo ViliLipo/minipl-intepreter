@@ -141,7 +141,7 @@ class Parser:
         if tokenType == 'read':
             node = makeNode(self.symbol)
             self.nextToken()
-            self.match('identifier')
+            node.addChild(self.match('identifier'))
             self.match(';')
             return node
         else:

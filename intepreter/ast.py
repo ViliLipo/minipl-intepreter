@@ -23,10 +23,13 @@ class Node:
     def addChild(self, node):
         self.children.append(node)
 
+    def accept(self, visitor):
+        visitor.visitNode(self)
+
 
 class ExprNode(Node):
-    def __init__(self, parent, symbol):
-        super().__init__(parent, symbol)
+    def __init__(self, symbol):
+        super().__init__(symbol)
 
     def getLhand(self):
         return self.children[0]
@@ -34,12 +37,54 @@ class ExprNode(Node):
     def getRightHand(self):
         return self.children[1]
 
+    def accept(self, visitor):
+        visitor.visitExprNode(self)
 
-class AST:
 
+class AssignNode(Node):
     def __init__(self, symbol):
-        self.root = Node(None, symbol)
+        super().__init__(symbol)
+
+    def accept(self, visitor):
+        visitor.visitAssignNode(self)
+
+
+class PrintNode(Node):
+    def __init__(self, symbol):
+        super().__init__(symbol)
+
+    def accept(self, visitor):
+        visitor.visitPrintNode(self)
+
+
+class ReadNode(Node):
+    def __init__(self, symbol):
+        super().__init__(symbol)
+
+    def accept(self, visitor):
+        visitor.visitReadNode(self)
+
+
+class AssertNode(Node):
+    def __init__(self, symbol):
+        super().__init__(symbol)
+
+    def accept(self, visitor):
+        visitor.visitAssertNode(self)
+
+
+class RefNode(Node):
+    def __init__(self, symbol):
+        super().__init__(symbol)
+
+    def accept(self, visitor):
+        visitor.visitRefNode(self)
 
 
 def makeNode(symbol):
+    tokenType = symbol.tokenType
+    if tokenType == "var":
+        return AssignNode(symbol)
+    elif tokenType == "read":
+        return ReadNode(symbol)
     return Node(symbol)
