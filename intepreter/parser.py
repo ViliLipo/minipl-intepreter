@@ -50,13 +50,10 @@ class Parser:
             return None
 
     def program(self):
-        stmntlist = []
+        stmntlist = makeNode()
         while self.symbol.tokenType != "eof":
-            stmntlist.append(self.statement())
-        for stmnt in stmntlist:
-            print(stmnt)
-        else:
-            print('end of file')
+            stmntlist.addChild(self.statement())
+        return stmntlist
 
     def statement(self):
         node = False
@@ -66,6 +63,7 @@ class Parser:
                 return node
         else:
             print("statement cant start with lexeme {}".format(self.symbol))
+            return None
 
     def assignStatement(self):
         tokenType = self.symbol.tokenType
@@ -89,12 +87,11 @@ class Parser:
             variable = self.match('identifier')
             condition = self.match('in')
             lhs = self.expression()
-            ran = self.match('..')
+            self.match('..')
             rhs = self.expression()
-            ran.addChild(lhs)
-            ran.addChild(rhs)
             condition.addChild(variable)
-            condition.addChild(ran)
+            condition.addChild(lhs)
+            condition.addChild(rhs)
             node.addChild(condition)
             body = self.match('do')
             node.addChild(body)
@@ -112,13 +109,15 @@ class Parser:
         if tokenType == 'var':
             node = makeNode(self.symbol)
             self.nextToken()
-            node.addChild(self.match('identifier'))
+            ref = self.match('identifier')
+            node.addChild(ref)
             self.match(':')
             node.addChild(self.matchType())
             if self.symbol.tokenType == ':=':
                 assign = makeNode(self.symbol)
                 self.nextToken()
                 node.addChild(assign)
+                assign.addChild(ref)
                 assign.addChild(self.expression())
             self.match(';')
             return node
@@ -178,7 +177,7 @@ class Parser:
     def operand(self):
         tokenType = self.symbol.tokenType
         node = None
-        if tokenType in ['integer', 'string', 'identifier']:
+        if tokenType in ['integer', 'string_literal', 'identifier']:
             node = makeNode(self.symbol)
             self.nextToken()
         elif tokenType == '(':

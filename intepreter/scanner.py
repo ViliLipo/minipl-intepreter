@@ -8,7 +8,7 @@ class Token:
         self.startposition = startposition
 
     def __str__(self):
-        return 'Type:{}, Lexeme: {}'\
+        return 'Type: {}, Lexeme: {}'\
             .format(self.tokenType, self.lexeme)
 
     def __repr__(self):
@@ -96,7 +96,9 @@ class Scanner:
                 lexeme = lexeme + src.getChar()
             if src.peek() == '"':
                 lexeme = lexeme + src.getChar()
-            return Token('string', lexeme, startPos, src.getCurrentPosition())
+            return Token('string_literal',
+                         lexeme, startPos,
+                         src.getCurrentPosition())
         return False
 
     def scanIdentifierOrKeyword(src):

@@ -4,25 +4,53 @@ from abc import ABC, abstractmethod
 class Visitor(ABC):
 
     @abstractmethod
-    def visitAssignmentNode(self, node):
-        raise NotImplementedError("Override this method in subclass")
+    def visitDeclarationNode(self, node):
+        pass
+
+    @abstractmethod
+    def visitAssignNode(self, node):
+        pass
 
     @abstractmethod
     def visitRefNode(self, node):
-        raise NotImplementedError("Override this method in subclass")
+        pass
 
     @abstractmethod
     def visitPrintNode(self, node):
-        raise NotImplementedError("Override this method in subclass")
+        pass
 
     @abstractmethod
     def visitReadNode(self, node):
-        raise NotImplementedError("Override this method in subclass")
+        pass
 
     @abstractmethod
     def visitAssertNode(self, node):
-        raise NotImplementedError("Override this method in subclass")
+        pass
 
     @abstractmethod
-    def visitExpr(self, node):
-        raise NotImplementedError("Override this method in subclass")
+    def visitExprNode(self, node):
+        pass
+
+    @abstractmethod
+    def visitIntegerNode(self, node):
+        pass
+
+    @abstractmethod
+    def visitStringNode(self, node):
+        pass
+
+    @abstractmethod
+    def visitTypeNode(self, node):
+        pass
+
+    @abstractmethod
+    def visitStatementListNode(self, node):
+        pass
+
+    @abstractmethod
+    def visitForNode(self, node):
+        pass
+
+    @abstractmethod
+    def visitForConditionNode(self, node):
+        pass
