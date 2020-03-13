@@ -62,3 +62,6 @@ class PrintVisitor(Visitor):
 
     def visitNode(self, node):
         self.__visit__(node)
+
+    def visitUnaryExprNode(self, node):
+        self.__visit__(node)

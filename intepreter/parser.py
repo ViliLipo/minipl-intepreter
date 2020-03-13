@@ -16,7 +16,7 @@ class Parser:
                 self.readStatement,
                 ]
 
-    operators = ['+', '-', '/', '*', '&', '|', '=']
+    operators = ['+', '-', '/', '*', '&', '|', '=', '!']
 
     def nextToken(self):
         self.symbol = self.scanner.scanNextToken()
@@ -159,9 +159,10 @@ class Parser:
 
     def expression(self):
         if self.symbolIsUnary():
+            print('Handling unary operator')
             node = makeNode(self.symbol)
             self.nextToken()
-            rhs = self.operand
+            rhs = self.operand()
             node.addChild(rhs)
             return node
         lhs = self.operand()

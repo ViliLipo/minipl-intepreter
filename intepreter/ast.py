@@ -2,6 +2,7 @@ class Node:
     def __init__(self, symbol):
         self.children = []
         self.symbol = symbol
+        self.evalType = None
 
     def __str__(self):
         string = "-----\n| {}, class: {}\n|".format(
@@ -26,6 +27,9 @@ class Node:
 
     def accept(self, visitor):
         visitor.visitNode(self)
+
+    def setEvalType(self, evalType):
+        self.evalType = evalType
 
 
 class ExprNode(Node):
@@ -137,6 +141,13 @@ class StatementListNode(Node):
     def accept(self, visitor):
         visitor.visitStatementListNode(self)
 
+class UnaryExprNode(Node):
+    def __init__(self, symbol):
+        super().__init__(symbol)
+
+    def accept(self, visitor):
+        visitor.visitUnaryExprNode(self)
+
 
 def makeNode(symbol=None):
     if symbol is None:
@@ -156,6 +167,8 @@ def makeNode(symbol=None):
         return AssignNode(symbol)
     elif tokenType in ['+', '-', '*', '=']:
         return ExprNode(symbol)
+    elif tokenType == '!':
+        return UnaryExprNode(symbol)
     elif tokenType == "string_literal":
         return StringNode(symbol)
     elif tokenType == "integer":

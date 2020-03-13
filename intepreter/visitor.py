@@ -54,3 +54,7 @@ class Visitor(ABC):
     @abstractmethod
     def visitForConditionNode(self, node):
         pass
+
+    @abstractmethod
+    def visitUnaryExprNode(self, node):
+        pass
