@@ -9,8 +9,10 @@ class PrintVisitor(Visitor):
         self.result = ''
 
     def __visit__(self, node):
-        string = "----\n| {}, class: {}\n|"\
-            .format(node.symbol, node.__class__.__name__)
+        string = "----\n| {}, class: {}, evalType: {}\n|"\
+            .format(node.symbol,
+                    node.__class__.__name__,
+                    node.evalType)
         for child in node.children:
             child.accept(self)
             lines = self.result.splitlines()
@@ -55,6 +57,9 @@ class PrintVisitor(Visitor):
         self.__visit__(node)
 
     def visitForConditionNode(self, node):
+        self.__visit__(node)
+
+    def visitRangeNode(self, node):
         self.__visit__(node)
 
     def visitForNode(self, node):

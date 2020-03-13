@@ -3,6 +3,7 @@ class Node:
         self.children = []
         self.symbol = symbol
         self.evalType = None
+        self.evalValue = None
 
     def __str__(self):
         string = "-----\n| {}, class: {}\n|".format(
@@ -31,15 +32,18 @@ class Node:
     def setEvalType(self, evalType):
         self.evalType = evalType
 
+    def setEvalValue(self, evalValue):
+        self.evalValue = evalValue
+
 
 class ExprNode(Node):
     def __init__(self, symbol):
         super().__init__(symbol)
 
-    def getLhand(self):
+    def getLhsChild(self):
         return self.children[0]
 
-    def getRightHand(self):
+    def getRhsChild(self):
         return self.children[1]
 
     def accept(self, visitor):
@@ -53,6 +57,12 @@ class AssignNode(Node):
     def accept(self, visitor):
         visitor.visitAssignNode(self)
 
+    def getRefChild(self):
+        return self.children[0]
+
+    def getRhsChild(self):
+        return self.children[1]
+
 
 class PrintNode(Node):
     def __init__(self, symbol):
@@ -60,6 +70,9 @@ class PrintNode(Node):
 
     def accept(self, visitor):
         visitor.visitPrintNode(self)
+
+    def getPrintableChild(self):
+        return self.children[0]
 
 
 class ReadNode(Node):
@@ -69,6 +82,9 @@ class ReadNode(Node):
     def accept(self, visitor):
         visitor.visitReadNode(self)
 
+    def getTargetChild(self):
+        return self.children[0]
+
 
 class AssertNode(Node):
     def __init__(self, symbol):
@@ -76,6 +92,9 @@ class AssertNode(Node):
 
     def accept(self, visitor):
         visitor.visitAssertNode(self)
+
+    def getArgumentChild(self):
+        return self.children[0]
 
 
 class RefNode(Node):
@@ -92,6 +111,18 @@ class DeclarationNode(Node):
 
     def accept(self, visitor):
         visitor.visitDeclarationNode(self)
+
+    def hasAssignment(self):
+        return len(self.children) == 3
+
+    def getRefChild(self):
+        return self.children[0]
+
+    def getTypeChild(self):
+        return self.children[1]
+
+    def getAssignChild(self):
+        return self.children[2]
 
 
 class IntegerNode(Node):
@@ -125,6 +156,12 @@ class ForNode(Node):
     def accept(self, visitor):
         visitor.visitForNode(self)
 
+    def getConditionChild(self):
+        return self.children[0]
+
+    def getBodyChild(self):
+        return self.children[1]
+
 
 class ForConditionNode(Node):
     def __init__(self, symbol):
@@ -132,6 +169,26 @@ class ForConditionNode(Node):
 
     def accept(self, visitor):
         visitor.visitForConditionNode(self)
+
+    def getRefChild(self):
+        return self.children[0]
+
+    def getRangeChild(self):
+        return self.children[1]
+
+
+class RangeNode(Node):
+    def __init__(self, symbol):
+        super().__init__(symbol)
+
+    def accept(self, visitor):
+        visitor.visitRangeNode(self)
+
+    def getStartNode(self):
+        return self.children[0]
+
+    def getEndNode(self):
+        return self.children[1]
 
 
 class StatementListNode(Node):
@@ -141,12 +198,16 @@ class StatementListNode(Node):
     def accept(self, visitor):
         visitor.visitStatementListNode(self)
 
+
 class UnaryExprNode(Node):
     def __init__(self, symbol):
         super().__init__(symbol)
 
     def accept(self, visitor):
         visitor.visitUnaryExprNode(self)
+
+    def getRhsChild(self):
+        return self.children[0]
 
 
 def makeNode(symbol=None):
@@ -181,4 +242,6 @@ def makeNode(symbol=None):
         return ForConditionNode(symbol)
     elif tokenType == "do":
         return StatementListNode(symbol)
+    elif tokenType == '..':
+        return RangeNode(symbol)
     return Node(symbol)

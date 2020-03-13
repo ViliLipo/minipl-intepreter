@@ -56,5 +56,9 @@ class Visitor(ABC):
         pass
 
     @abstractmethod
+    def visitRangeNode(self, node):
+        pass
+
+    @abstractmethod
     def visitUnaryExprNode(self, node):
         pass

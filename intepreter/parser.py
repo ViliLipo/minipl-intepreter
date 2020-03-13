@@ -87,11 +87,12 @@ class Parser:
             variable = self.match('identifier')
             condition = self.match('in')
             lhs = self.expression()
-            self.match('..')
+            rangeNode = self.match('..')
             rhs = self.expression()
             condition.addChild(variable)
-            condition.addChild(lhs)
-            condition.addChild(rhs)
+            rangeNode.addChild(lhs)
+            rangeNode.addChild(rhs)
+            condition.addChild(rangeNode)
             node.addChild(condition)
             body = self.match('do')
             node.addChild(body)
@@ -159,7 +160,6 @@ class Parser:
 
     def expression(self):
         if self.symbolIsUnary():
-            print('Handling unary operator')
             node = makeNode(self.symbol)
             self.nextToken()
             rhs = self.operand()
@@ -195,4 +195,3 @@ class Parser:
 
     def symbolIsUnary(self):
         return self.symbol.tokenType == '!'
-    
