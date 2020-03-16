@@ -32,8 +32,9 @@ class InterpretingVisitor():
     def visitPrintNode(self, node):
         child = node.getPrintableChild()
         child.accept(self)
-        value = child.evalValue
-        print(value)
+        value = str(child.evalValue)
+        text = value.replace('\\n', "\n")
+        print(text, end='')
 
     def visitReadNode(self, node):
         child = node.getTargetChild()
@@ -41,9 +42,9 @@ class InterpretingVisitor():
         varType, value = self.symboltable.get(identifier)
         newValue = input()
         if newValue.isdigit() and varType == 'int':
-            self.symboltable[identifier] = (varType, newValue)
+            self.symboltable[identifier] = (varType, int(newValue))
         elif varType == 'string':
-            self.symboltable[identifier] = (varType, newValue)
+            self.symboltable[identifier] = (varType, str(newValue))
 
     def visitAssertNode(self, node):
         argChild = node.getArgumentChild()
@@ -103,13 +104,33 @@ class InterpretingVisitor():
             child.accept(self)
 
     def visitForConditionNode(self, node):
-        pass
+        refChild = node.getRefChild()
+        rangeChild = node.getRangeChild()
+        refChild.accept(self)
+        rangeChild.accept(self)
+        refVal = refChild.evalValue
+        ran = rangeChild.evalValue
+        node.setEvalValue((refVal, ran))
 
     def visitRangeNode(self, node):
-        pass
+        start = node.getStartNode()
+        start.accept(self)
+        startValue = start.evalValue
+        end = node.getEndNode()
+        end.accept(self)
+        endValue = end.evalValue + 1
+        node.setEvalValue(range(startValue, endValue))
 
     def visitForNode(self, node):
-        pass
+        condition = node.getConditionChild()
+        condition.accept(self)
+        refVal, ran = condition.evalValue
+        body = node.getBodyChild()
+        identifier = condition.getRefChild().symbol.lexeme
+        t, var = self.symboltable[identifier]
+        for i in ran:
+            self.symboltable[identifier] = (t, i)
+            body.accept(self)
 
     def visitNode(self, node):
         pass

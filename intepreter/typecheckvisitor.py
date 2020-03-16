@@ -56,6 +56,7 @@ class TypeCheck(Visitor):
 
     def visitAssignNode(self, node):
         lhs = node.getRefChild()
+        lhs.accept(self)
         symbol = lhs.symbol
         identifier = symbol.lexeme
         var = self.symbolTable.get(identifier)

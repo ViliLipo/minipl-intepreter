@@ -22,4 +22,4 @@ class TestPrintVisitor(unittest.TestCase):
         ast.accept(iv)
         pv = PrintVisitor()
         ast.accept(pv)
-        print(iv.symboltable)
+        print(pv.result)
