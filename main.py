@@ -12,10 +12,10 @@ def setup(filename):
     scanner = Scanner(src)
     parser = Parser(scanner)
     ast = parser.program()
-    return ast
+    return ast, parser.errors
 
 
-def run(ast):
+def run(ast, errors):
     tc = TypeCheck()
     ast.accept(tc)
     if len(tc.errors) == 0:
@@ -29,11 +29,15 @@ def run(ast):
 def main():
     if len(argv) == 2:
         fname = argv[1]
-        ast = setup(fname)
-        run(ast)
+        ast, errors = setup(fname)
+        if len(errors) == 0:
+            run(ast, errors)
+        else:
+            for error in errors:
+                print(error)
 
     else:
-        print("Give filename as param")
+        print("Give filename as cli parameter.")
     pass
 
 

@@ -1,4 +1,9 @@
 from intepreter.ast import makeNode
+from intepreter.ast import ErrorNode
+
+
+class ParsingError(Exception):
+    pass
 
 
 class Parser:
@@ -8,15 +13,15 @@ class Parser:
         self.nextToken()
         self.errors = []
         self.statementVariants = [
-                self.assignStatement,
-                self.assertStatement,
-                self.declarationStatement,
-                self.printStatement,
-                self.forStatement,
-                self.readStatement,
-                ]
+            self.assignStatement,
+            self.assertStatement,
+            self.declarationStatement,
+            self.printStatement,
+            self.forStatement,
+            self.readStatement,
+        ]
 
-    operators = ['+', '-', '/', '*', '&', '|', '=', '!']
+    operators = ['+', '-', '/', '*', '&', '|', '=']
 
     def nextToken(self):
         self.symbol = self.scanner.scanNextToken()
@@ -27,9 +32,9 @@ class Parser:
             self.nextToken()
             return node
         else:
-            print('Expected {}, got {}'.format(
-                typeString, self.symbol.tokenType))
-            return None
+            raise ParsingError('Expected {}, got {} at line {}.'.format(
+                typeString, self.symbol.tokenType,
+                self.symbol.startposition[1]))
 
     def matchOperator(self):
         if self.symbol.tokenType in Parser.operators:
@@ -37,9 +42,8 @@ class Parser:
             self.nextToken()
             return node
         else:
-            print('Expected operator, got {}'.format(
-                self.symbol.tokenType))
-            return None
+            raise ParsingError('Expected operator, got {} at line {}.'.format(
+                self.symbol.tokenType, self.symbol.startposition[1]))
 
     def matchType(self):
         if self.symbol.tokenType in ['int', 'string', 'bool']:
@@ -47,23 +51,66 @@ class Parser:
             self.nextToken()
             return node
         else:
-            return None
+            raise ParsingError('Expected type definition, got {} at line {}'
+                               .format(
+                                   self.symbol.tokenType,
+                                   self.symbol.startposition[1]))
+
+    def first(symbol):
+        if symbol == 'statement':
+            return ['identifier', 'var', 'for', 'assert', 'read', 'print']
+        if symbol == 'expression':
+            return Parser.first('operand') + ['!']
+        if symbol == 'operand':
+            return ['indentifier' 'int', 'string_literal', '(']
+        if symbol == 'operator':
+            return Parser.operators
+
+    def checkForError(self, symbol, firstN, followSet):
+        if self.symbol.tokenType not in firstN:
+            self.errors.append('{} can not start with: {}'
+                               .format(symbol, self.symbol.tokenType))
+            while self.symbol.tokenType not in firstN + followSet + ['eof']:
+                self.nextToken()
 
     def program(self):
         stmntlist = makeNode()
-        while self.symbol.tokenType != "eof":
-            stmntlist.addChild(self.statement())
-        return stmntlist
+        try:
+            while self.symbol.tokenType != "eof":
+                stmntlist.addChild(self.statement(['eof']))
+            return stmntlist
+        except ParsingError as e:
+            self.errors.append(e)
+            while True:
+                if self.symbol.tokenType in Parser.first('statement'):
+                    stmntlist.addChild(self.statement(['eof']))
+                elif self.symbol.tokenType == 'eof':
+                    return stmntlist
+                self.nextToken()
 
-    def statement(self):
-        node = False
-        for stmnt in self.statementVariants:
-            node = stmnt()
-            if node:
-                return node
-        else:
-            print("statement cant start with lexeme {}".format(self.symbol))
-            return None
+    def statement(self, followset):
+        try:
+            node = ErrorNode(self.symbol)
+            for stmnt in self.statementVariants:
+                node = stmnt()
+                if node:
+                    return node
+            else:
+                line = self.symbol.startposition[1]
+                raise ParsingError(
+                    "Statement cant start with lexeme {} on line {}."
+                    .format(self.symbol, line))
+        except ParsingError as e:
+            while True:
+                if self.symbol.tokenType in Parser.first('statement'):
+                    self.errors.append(e)
+                    return self.statement(followset)
+                elif self.symbol.tokenType in followset:
+                    self.errors.append(e)
+                    return ErrorNode(self.symbol)
+                elif self.symbol.tokenType == 'eof':
+                    raise e
+                self.nextToken()
 
     def assignStatement(self):
         tokenType = self.symbol.tokenType
@@ -71,7 +118,7 @@ class Parser:
             lhs = makeNode(self.symbol)
             self.nextToken()
             node = self.match(':=')
-            rhs = self.expression()
+            rhs = self.expression([';'])
             node.addChild(lhs)
             node.addChild(rhs)
             self.match(';')
@@ -86,9 +133,9 @@ class Parser:
             self.nextToken()
             variable = self.match('identifier')
             condition = self.match('in')
-            lhs = self.expression()
+            lhs = self.expression(['..'])
             rangeNode = self.match('..')
-            rhs = self.expression()
+            rhs = self.expression(['do'])
             condition.addChild(variable)
             rangeNode.addChild(lhs)
             rangeNode.addChild(rhs)
@@ -97,7 +144,18 @@ class Parser:
             body = self.match('do')
             node.addChild(body)
             while not self.symbol.tokenType == 'end':
-                body.addChild(self.statement())
+                try:
+                    body.addChild(self.statement(Parser.first('statement')
+                                                 + ['end']))
+                except ParsingError:
+                    if self.symbol.tokenType == 'eof':
+                        line = node.symbol.startposition[1]
+                        error = ParsingError(
+                            'Runaway for statement at line {}.'
+                            .format(line))
+                        self.errors.append(error)
+                        return node
+
             self.match('end')
             self.match('for')
             self.match(';')
@@ -119,7 +177,7 @@ class Parser:
                 self.nextToken()
                 node.addChild(assign)
                 assign.addChild(ref)
-                assign.addChild(self.expression())
+                assign.addChild(self.expression([';']))
             self.match(';')
             return node
         else:
@@ -130,7 +188,9 @@ class Parser:
         if tokenType == 'assert':
             node = makeNode(self.symbol)
             self.nextToken()
-            node.addChild(self.expression())
+            self.match('(')
+            node.addChild(self.expression([')']))
+            self.match(')')
             self.match(';')
             return node
         else:
@@ -152,46 +212,79 @@ class Parser:
         if tokenType == 'print':
             node = makeNode(self.symbol)
             self.nextToken()
-            node.addChild(self.expression())
+            node.addChild(self.expression([';']))
             self.match(';')
             return node
         else:
             return False
 
-    def expression(self):
-        if self.symbolIsUnary():
-            node = makeNode(self.symbol)
-            self.nextToken()
-            rhs = self.operand()
-            node.addChild(rhs)
-            return node
-        lhs = self.operand()
-        if self.symbol.tokenType in Parser.operators:
-            node = self.operation()
-            rhs = self.operand()
-            node.addChild(lhs)
-            node.addChild(rhs)
-            return node
-        else:
-            return lhs
+    def expression(self, followset):
+        try:
+            if self.symbolIsUnary():
+                node = makeNode(self.symbol)
+                self.nextToken()
+                rhs = self.operand(followset)
+                node.addChild(rhs)
+                return node
+            lhs = self.operand(Parser.first('operator'))
+            if self.symbol.tokenType in Parser.operators:
+                node = self.operation(Parser.first('operand'))
+                rhs = self.operand(followset)
+                node.addChild(lhs)
+                node.addChild(rhs)
+                return node
+            else:
+                return lhs
+        except ParsingError as e:
+            self.errors.append(e)
+            while True:
+                if self.symbol.tokenType in Parser.first('expression'):
+                    node = self.expression(followset)
+                    return node
+                elif self.symbol.tokenType in followset:
+                    return ErrorNode(self.symbol)
+                self.nextToken()
 
-    def operand(self):
-        tokenType = self.symbol.tokenType
-        node = None
-        if tokenType in ['integer', 'string_literal', 'identifier']:
-            node = makeNode(self.symbol)
-            self.nextToken()
-        elif tokenType == '(':
-            self.nextToken()
-            node = self.expression()
-            self.match(')')
-        else:
-            print("operand can't be {}".format(self.symbol))
-        return node
+    def operand(self, followset):
+        try:
+            tokenType = self.symbol.tokenType
+            if tokenType in ['integer', 'string_literal', 'identifier']:
+                node = makeNode(self.symbol)
+                self.nextToken()
+                return node
+            elif tokenType == '(':
+                self.nextToken()
+                node = self.expression([')'])
+                self.match(')')
+                return node
+            else:
+                raise ParsingError(
+                    'Operand cant start with {} on line {}.'
+                    .format(tokenType,
+                            self.symbol.startposition[1]))
+        except ParsingError as e:
+            while True:
+                self.errors.append(e)
+                if self.symbol.tokenType in Parser.first('operand'):
+                    node = self.operand(followset)
+                    return node
+                elif self.symbol.tokenType in followset:
+                    return ErrorNode(self.symbol)
+                self.nextToken()
 
-    def operation(self):
-        node = self.matchOperator()
-        return node
+    def operation(self, followset):
+        try:
+            node = self.matchOperator()
+            return node
+        except ParsingError as e:
+            self.errors.append(e)
+            while True:
+                if self.symbol.tokenType in Parser.first('operation'):
+                    node = self.operation(followset)
+                    return node
+                elif self.symbol.tokenType in followset:
+                    return ErrorNode(self.symbol)
+                self.nextToken()
 
     def symbolIsUnary(self):
         return self.symbol.tokenType == '!'

@@ -210,6 +210,11 @@ class UnaryExprNode(Node):
         return self.children[0]
 
 
+class ErrorNode(Node):
+    def __init__(self, symbol):
+        super().__init__(symbol)
+
+
 def makeNode(symbol=None):
     if symbol is None:
         return StatementListNode(None)
@@ -244,4 +249,6 @@ def makeNode(symbol=None):
         return StatementListNode(symbol)
     elif tokenType == '..':
         return RangeNode(symbol)
+    elif tokenType == 'error':
+        return ErrorNode(symbol)
     return Node(symbol)
