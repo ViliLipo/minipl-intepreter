@@ -3,11 +3,18 @@ from intepreter.source import Source
 from intepreter.scanner import Scanner
 
 
-class TestSourceMethods(unittest.TestCase):
+class MockSource(Source):
+    def __init__(self, lines):
+        self.lines = lines
+        self.rowNumber = 0
+        self.columnNumber = 0
+
+
+class TestScannerMethods(unittest.TestCase):
 
     def testScanNextToken(self):
-        src = Source('./tests/test.minipl')
-        src.lines = ["var X : int : 4 + (6 * 2);", "print X;"]
+        lines = ["var X : int : 4 + (6 * 2);", "print X;"]
+        src = MockSource(lines)
         tokens = [('var', 'var'), ('identifier', 'X'),
                   (':', ':'), ('int', 'int'),
                   (':', ':'), ('integer', '4'), ('+', '+'),
@@ -21,11 +28,11 @@ class TestSourceMethods(unittest.TestCase):
             self.assertEqual(token.lexeme, lexeme)
 
     def testScanNextToken2(self):
-        src = Source('./tests/test.minipl')
-        src.lines = ["var x : int;\n",
-                     "for x in 0..5 do\n",
-                     "print x;\n",
-                     "end for;\n"]
+        lines = ["var x : int;\n",
+                 "for x in 0..5 do\n",
+                 "print x;\n",
+                 "end for;\n"]
+        src = MockSource(lines)
         scanner = Scanner(src)
         tokens = [('var', 'var'), ('identifier', 'x'),
                   (':', ':'), ('int', 'int'),
@@ -40,6 +47,30 @@ class TestSourceMethods(unittest.TestCase):
             tokenType, lexeme = t
             self.assertEqual(token.tokenType, tokenType)
             self.assertEqual(token.lexeme, lexeme)
+
+    def testMultilineComment(self):
+        lines = ["/* multi", "line", "comment */\n",
+                 "/* multi", "line", "comment */\n"]
+        src = MockSource(lines)
+        scanner = Scanner(src)
+        token = scanner.scanNextToken()
+        self.assertEqual('eof', token.tokenType)
+
+    def testRunawayMultilineComment(self):
+        lines = ["/* multi", "line", "comment \n",
+                 "var x : int : 3;\n"]
+        src = MockSource(lines)
+        scanner = Scanner(src)
+        token = scanner.scanNextToken()
+        self.assertEqual('error', token.tokenType)
+
+    def testSingleLineComment(self):
+        lines = ["// Single line comment \n", 'var x : int := 0;']
+        src = MockSource(lines)
+        scanner = Scanner(src)
+        token = scanner.scanNextToken()
+        print(token)
+        self.assertEqual('var', token.tokenType)
 
     def testReal(self):
         src = Source('./tests/test.minipl')

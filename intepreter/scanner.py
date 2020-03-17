@@ -15,6 +15,10 @@ class Token:
         return self.__str__()
 
 
+class LexicalError(Exception):
+    pass
+
+
 class Scanner:
 
     keywords = ['var', 'for', 'end', 'in', 'do', 'read',
@@ -36,7 +40,10 @@ class Scanner:
     def scanNextToken(self):
         position = self.src.getCurrentPosition()
         errortoken = Token('error', '', position, position)
-        self.screenWhiteSpace()
+        try:
+            self.screening()
+        except LexicalError:
+            return errortoken
         if self.src.eof():
             return Token('eof', '', position, position)
         position = self.src.getCurrentPosition()
@@ -45,6 +52,14 @@ class Scanner:
             if possibleToken is not False:
                 return possibleToken
         return errortoken
+
+    def screening(self):
+        value = True
+        while value:
+            self.screenWhiteSpace()
+            value = Scanner.screenMultilineComment(self.src)
+            self.screenWhiteSpace()
+            value = value or Scanner.screenSingleLineComment(self.src)
 
     def screenWhiteSpace(self):
         while (self.src.peek() in [' ', '\t', '\n']):
@@ -147,3 +162,32 @@ class Scanner:
             return Token(lexeme, lexeme, startPos, src.getCurrentPosition())
         else:
             return False
+
+    def screenSingleLineComment(src):
+        if src.peek() == '/':
+            src.getChar()
+            if src.peek() == '/':
+                src.getChar()
+                while not (src.peek() == '\n' or src.eof()):
+                    src.getChar()
+                return True
+            else:
+                src.reverseOnePosition()
+                return False
+
+    def screenMultilineComment(src):
+        if src.peek() == '/':
+            src.getChar()
+            if src.peek() == '*':
+                while not src.eof():
+                    src.getChar()
+                    if src.peek() == '*':
+                        src.getChar()
+                        if src.peek() == '/':
+                            src.getChar()
+                            return True
+                raise LexicalError('Runaway comment')
+                return False
+            else:
+                src.reverseOnePosition()
+                return False
