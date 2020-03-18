@@ -20,7 +20,6 @@ class Source:
 
     def getChar(self):
         if self.eof():
-            print(self.getCurrentPosition())
             return False
         char = self.lines[self.rowNumber][self.columnNumber]
         self.columnNumber = self.columnNumber + 1

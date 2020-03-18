@@ -66,27 +66,15 @@ class Parser:
         if symbol == 'operator':
             return Parser.operators
 
-    def checkForError(self, symbol, firstN, followSet):
-        if self.symbol.tokenType not in firstN:
-            self.errors.append('{} can not start with: {}'
-                               .format(symbol, self.symbol.tokenType))
-            while self.symbol.tokenType not in firstN + followSet + ['eof']:
-                self.nextToken()
-
     def program(self):
         stmntlist = makeNode()
-        try:
-            while self.symbol.tokenType != "eof":
+        while self.symbol.tokenType != "eof":
+            try:
                 stmntlist.addChild(self.statement(['eof']))
-            return stmntlist
-        except ParsingError as e:
-            self.errors.append(e)
-            while True:
-                if self.symbol.tokenType in Parser.first('statement'):
-                    stmntlist.addChild(self.statement(['eof']))
-                elif self.symbol.tokenType == 'eof':
-                    return stmntlist
-                self.nextToken()
+            except ParsingError as e:
+                print("Append in program")
+                self.errors.append(e)
+        return stmntlist
 
     def statement(self, followset):
         try:
@@ -98,12 +86,13 @@ class Parser:
             else:
                 line = self.symbol.startposition[1]
                 raise ParsingError(
-                    "Statement cant start with lexeme {} on line {}."
+                    "Statement can nott start with lexeme {} on line {}."
                     .format(self.symbol, line))
         except ParsingError as e:
             while True:
                 if self.symbol.tokenType in Parser.first('statement'):
                     self.errors.append(e)
+                    print("Append in statement")
                     return self.statement(followset)
                 elif self.symbol.tokenType in followset:
                     self.errors.append(e)
@@ -155,7 +144,6 @@ class Parser:
                             .format(line))
                         self.errors.append(error)
                         return node
-
             self.match('end')
             self.match('for')
             self.match(';')
@@ -237,6 +225,7 @@ class Parser:
                 return lhs
         except ParsingError as e:
             self.errors.append(e)
+            print("Append in expression")
             while True:
                 if self.symbol.tokenType in Parser.first('expression'):
                     node = self.expression(followset)
@@ -259,12 +248,12 @@ class Parser:
                 return node
             else:
                 raise ParsingError(
-                    'Operand cant start with {} on line {}.'
+                    'Operand can not start with {} on line {}.'
                     .format(tokenType,
                             self.symbol.startposition[1]))
         except ParsingError as e:
+            self.errors.append(e)
             while True:
-                self.errors.append(e)
                 if self.symbol.tokenType in Parser.first('operand'):
                     node = self.operand(followset)
                     return node
@@ -278,6 +267,7 @@ class Parser:
             return node
         except ParsingError as e:
             self.errors.append(e)
+            print("Append in operation")
             while True:
                 if self.symbol.tokenType in Parser.first('operation'):
                     node = self.operation(followset)

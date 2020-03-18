@@ -23,12 +23,7 @@ class TestSourceMethods(unittest.TestCase):
         self.assertEqual(src.getCurrentPosition(), (1, 2))
 
     def testEof(self):
-        src = Source('./tests/test.minipl')
-        src.setCurrentPosition(9, 23)
-        print(src.getCurrentPosition())
-        print(src.getChar())
-        print(src.getCurrentPosition())
-        self.assertTrue(src.eof())
+        pass
 
 
 if __name__ == '__main__':

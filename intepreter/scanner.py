@@ -67,30 +67,15 @@ class Scanner:
 
     def scanNumber(src):
         def scanDigitPart(src):
+            startPos = src.getCurrentPosition()
             if src.peek().isdigit():
                 lexeme = ''
                 while src.peek().isdigit():
                     lexeme = lexeme + src.getChar()
-                return lexeme
-            return False
-        startPos = src.getCurrentPosition()
-        lexeme = scanDigitPart(src)
-        if lexeme is not False:
-            if src.peek() == '.':
-                lookAhead = src.getChar()
-                if src.peek() == '.':
-                    column, row = src.getCurrentPosition()
-                    src.reverseOnePosition()
-                    return Token('integer', lexeme,
-                                 startPos, src.getCurrentPosition())
-                lexeme = lexeme + lookAhead
-                lexeme = lexeme + scanDigitPart(src)
-                return Token('decimal', lexeme,
-                             startPos, src.getCurrentPosition())
-            else:
                 return Token('integer', lexeme,
                              startPos, src.getCurrentPosition())
-        return False
+            return False
+        return scanDigitPart(src)
 
     def scanRange(src):
         startPos = src.getCurrentPosition()
@@ -187,7 +172,6 @@ class Scanner:
                             src.getChar()
                             return True
                 raise LexicalError('Runaway comment')
-                return False
             else:
                 src.reverseOnePosition()
                 return False
