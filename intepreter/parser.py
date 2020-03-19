@@ -134,6 +134,7 @@ class Parser:
                 try:
                     body.addChild(self.statement(Parser.first('statement')
                                                  + ['end']))
+                    self.match(';')
                 except ParsingError:
                     if self.symbol.tokenType == 'eof':
                         line = node.symbol.startposition[1]
