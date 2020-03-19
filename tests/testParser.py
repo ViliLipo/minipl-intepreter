@@ -177,6 +177,9 @@ class TestParserMethod(unittest.TestCase):
         parser = self.__initparser__(lines)
         program = parser.program()
         self.assertTrue(len(program.children) >= 2)
+        child = program.children[1]
+        lex = child.symbol.lexeme
+        self.assertEqual(':=', lex)
 
     def testEofInMiddleOfExpression(self):
         lines = ['y := 5 + 3;', 'assert(x +']
