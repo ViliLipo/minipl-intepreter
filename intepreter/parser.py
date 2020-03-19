@@ -71,8 +71,8 @@ class Parser:
         while self.symbol.tokenType != "eof":
             try:
                 stmntlist.addChild(self.statement(['eof']))
+                self.match(';')
             except ParsingError as e:
-                print("Append in program")
                 self.errors.append(e)
         return stmntlist
 
@@ -86,19 +86,18 @@ class Parser:
             else:
                 line = self.symbol.startposition[1]
                 raise ParsingError(
-                    "Statement can nott start with lexeme {} on line {}."
+                    "Statement can not start with lexeme {} on line {}."
                     .format(self.symbol, line))
         except ParsingError as e:
             while True:
                 if self.symbol.tokenType in Parser.first('statement'):
                     self.errors.append(e)
-                    print("Append in statement")
                     return self.statement(followset)
+                elif self.symbol.tokenType == 'eof':
+                    raise e
                 elif self.symbol.tokenType in followset:
                     self.errors.append(e)
                     return ErrorNode(self.symbol)
-                elif self.symbol.tokenType == 'eof':
-                    raise e
                 self.nextToken()
 
     def assignStatement(self):
@@ -110,7 +109,6 @@ class Parser:
             rhs = self.expression([';'])
             node.addChild(lhs)
             node.addChild(rhs)
-            self.match(';')
             return node
         else:
             return False
@@ -146,7 +144,6 @@ class Parser:
                         return node
             self.match('end')
             self.match('for')
-            self.match(';')
             return node
         else:
             return False
@@ -166,7 +163,6 @@ class Parser:
                 node.addChild(assign)
                 assign.addChild(ref)
                 assign.addChild(self.expression([';']))
-            self.match(';')
             return node
         else:
             return False
@@ -179,7 +175,6 @@ class Parser:
             self.match('(')
             node.addChild(self.expression([')']))
             self.match(')')
-            self.match(';')
             return node
         else:
             return False
@@ -190,7 +185,6 @@ class Parser:
             node = makeNode(self.symbol)
             self.nextToken()
             node.addChild(self.match('identifier'))
-            self.match(';')
             return node
         else:
             return False
@@ -201,7 +195,6 @@ class Parser:
             node = makeNode(self.symbol)
             self.nextToken()
             node.addChild(self.expression([';']))
-            self.match(';')
             return node
         else:
             return False
@@ -214,7 +207,7 @@ class Parser:
                 rhs = self.operand(followset)
                 node.addChild(rhs)
                 return node
-            lhs = self.operand(Parser.first('operator'))
+            lhs = self.operand(Parser.first('operator') + followset)
             if self.symbol.tokenType in Parser.operators:
                 node = self.operation(Parser.first('operand'))
                 rhs = self.operand(followset)
@@ -224,14 +217,9 @@ class Parser:
             else:
                 return lhs
         except ParsingError as e:
-            self.errors.append(e)
-            print("Append in expression")
             while True:
-                if self.symbol.tokenType in Parser.first('expression'):
-                    node = self.expression(followset)
-                    return node
-                elif self.symbol.tokenType in followset:
-                    return ErrorNode(self.symbol)
+                if self.symbol.tokenType == 'eof':
+                    raise e
                 self.nextToken()
 
     def operand(self, followset):
@@ -252,13 +240,16 @@ class Parser:
                     .format(tokenType,
                             self.symbol.startposition[1]))
         except ParsingError as e:
-            self.errors.append(e)
             while True:
                 if self.symbol.tokenType in Parser.first('operand'):
+                    self.errors.append(e)
                     node = self.operand(followset)
                     return node
                 elif self.symbol.tokenType in followset:
+                    self.errors.append(e)
                     return ErrorNode(self.symbol)
+                elif self.symbol.tokenType == 'eof':
+                    raise e
                 self.nextToken()
 
     def operation(self, followset):
@@ -267,13 +258,14 @@ class Parser:
             return node
         except ParsingError as e:
             self.errors.append(e)
-            print("Append in operation")
             while True:
                 if self.symbol.tokenType in Parser.first('operation'):
                     node = self.operation(followset)
                     return node
                 elif self.symbol.tokenType in followset:
                     return ErrorNode(self.symbol)
+                elif self.symbol.tokenType == 'eof':
+                    raise e
                 self.nextToken()
 
     def symbolIsUnary(self):

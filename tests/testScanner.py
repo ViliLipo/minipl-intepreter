@@ -69,7 +69,6 @@ class TestScannerMethods(unittest.TestCase):
         src = MockSource(lines)
         scanner = Scanner(src)
         token = scanner.scanNextToken()
-        print(token)
         self.assertEqual('var', token.tokenType)
 
     def testReal(self):
@@ -78,7 +77,28 @@ class TestScannerMethods(unittest.TestCase):
         symbol = scanner.scanNextToken()
         while symbol.tokenType != 'eof':
             symbol = scanner.scanNextToken()
-            print(symbol)
+
+    def testLexicalError(self):
+        lines = ['var i : int := 3 $ x;\n']
+        src = MockSource(lines)
+        scanner = Scanner(src)
+        types = []
+        while not src.eof():
+            token = scanner.scanNextToken()
+            types.append(token.tokenType)
+        self.assertTrue('error' in types)
+        self.assertTrue('eof' in types)
+
+    def testLoneDotError(self):
+        lines = ['for i in 1.5 do\n']
+        src = MockSource(lines)
+        scanner = Scanner(src)
+        types = []
+        while not src.eof():
+            token = scanner.scanNextToken()
+            types.append(token.tokenType)
+        self.assertTrue('error' in types)
+        self.assertTrue('eof' in types)
 
 
 if __name__ == '__main__':

@@ -1,7 +1,7 @@
 import unittest
 from intepreter.source import Source
 from intepreter.scanner import Scanner
-from intepreter.parser import Parser, ParsingError
+from intepreter.parser import Parser
 from tests.testScanner import MockSource
 
 
@@ -68,6 +68,18 @@ class TestParserMethod(unittest.TestCase):
         subExpr = expression.getRhsChild()
         self.assertEqual('=', subExpr.symbol.lexeme)
 
+    def testMissingSemiColon(self):
+        # TODO
+        lines = ['var x : int := 3 + 5\n'
+                 'var y: int;']
+        parser = self.__initparser__(lines)
+        program = parser.program()
+        lines = ['x := 3\n'
+                 'var y: int;']
+        parser = self.__initparser__(lines)
+        program = parser.program()
+        print(program)
+
     def testRunawayParenthesis(self):
         lines = ['var ok : bool := !( 1 = 0;\n',
                  'var i : int;']
@@ -91,14 +103,85 @@ class TestParserMethod(unittest.TestCase):
         error = parser.errors[0]
         correctMsg = 'Operand can not start with + on line 2.'
         self.assertEqual(correctMsg, str(error))
-        print(str(error))
         self.assertEqual(1, len(parser.errors))
         assignment = program.children[2]
         three = assignment.getRhsChild()
         self.assertEqual('3', three.symbol.lexeme)
+
+    def testInvalidOperator(self):
+        lines = ['k := i $ j;',
+                 'var l: int:= 1;']
+        parser = self.__initparser__(lines)
+        program = parser.program()
+        self.assertTrue(len(parser.errors) >= 1)
+        secondStmnt = program.children[1]
+        lexeme = secondStmnt.symbol.lexeme
+        self.assertEqual('var', lexeme)
 
     def testIllegalStartOfStatement(self):
         lines = ['!( 1 = 0);\n']
         parser = self.__initparser__(lines)
         stmnt = parser.statement([';'])
         self.assertEqual('ErrorNode', stmnt.__class__.__name__)
+
+    def testLoneDotError(self):
+        lines = ['for x in 0.5 do\n',
+                 'print x;\n',
+                 'end for;\n',
+                 'assert(x = 5);\n']
+        parser = self.__initparser__(lines)
+        program = parser.program()
+        types = []
+        for child in program.children:
+            types.append(child.symbol.tokenType)
+        self.assertTrue('print' in types)
+        self.assertTrue('assert' in types)
+
+    def testRunawayForStatement(self):
+        lines = ['var x : int;',
+                 'for x in 0..5 do\n',
+                 'print x;\n',
+                 'assert(x = 5);\n']
+        parser = self.__initparser__(lines)
+        program = parser.program()
+        messages = []
+        for e in parser.errors:
+            messages.append(str(e))
+        self.assertTrue('Runaway for statement at line 2.' in messages)
+        self.assertEqual(len(program.children), 2)
+
+    def testMissingExpression(self):
+        lines = ['var x: int := ;',
+                 'var y: int;']
+        parser = self.__initparser__(lines)
+        program = parser.program()
+        msg = str(parser.errors[0])
+        self.assertEqual('Operand can not start with ; on line 1.',
+                         msg)
+        self.assertTrue(len(program.children) >= 2)
+
+    def testUnmatchedParen(self):
+        lines = ['var x: int := 3 + (5 * 4;',
+                 'var y: int;']
+        parser = self.__initparser__(lines)
+        program = parser.program()
+        msg = str(parser.errors[0])
+        self.assertEqual('Expected ), got ; at line 1.', msg)
+        self.assertTrue(len(program.children) >= 2)
+        lex = program.children[1].symbol.lexeme
+        self.assertEqual(lex, 'var')
+
+    def testInvalidType(self):
+        lines = ['var x: double := 3;\n',
+                 'y := 1;\n']
+        parser = self.__initparser__(lines)
+        program = parser.program()
+        self.assertTrue(len(program.children) >= 2)
+
+    def testEofInMiddleOfExpression(self):
+        lines = ['y := 5 + 3;', 'assert(x +']
+        parser = self.__initparser__(lines)
+        parser.program()
+        e = parser.errors[0]
+        correctMsg = 'Operand can not start with eof on line 3.'
+        self.assertEqual(correctMsg, str(e))

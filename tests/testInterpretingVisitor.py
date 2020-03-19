@@ -8,9 +8,9 @@ from intepreter.typecheckvisitor import TypeCheck
 from intepreter.printvisitor import PrintVisitor
 
 
-class TestPrintVisitor(unittest.TestCase):
+class TestInterpretingVisitor(unittest.TestCase):
 
-    def testPrintVisitor(self):
+    def testInterpretingVisitor(self):
         src = Source('./tests/test.minipl')
         scanner = Scanner(src)
         parser = Parser(scanner)

@@ -51,6 +51,7 @@ class Scanner:
             possibleToken = func(self.src)
             if possibleToken is not False:
                 return possibleToken
+        self.src.getChar()  # discard bad character
         return errortoken
 
     def screening(self):

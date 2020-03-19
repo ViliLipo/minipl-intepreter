@@ -123,8 +123,11 @@ python main.py ./tests/test.minipl
 
 When the scanner encounters an error it sends an error token to the parser.
 
-The parser uses context sensitive lookahead with exception driven error handling
-to recover from syntax errors.
+The parser uses context sensitive lookahead with exception driven error
+handling to recover from syntax errors. Because of the way how the error
+handling is written statements that are not able to be parsed will not show up
+in the AST built by the parser, as the statement routine sees that there is
+another symbol next, that is in its first set.
 
 Semantic errors are discovered by TypeCheckVisitor.
 These errors are printed to the user and prevent the interpreting process.
