@@ -1,6 +1,6 @@
 import unittest
-from intepreter.source import Source
-from intepreter.scanner import Scanner
+from interpreter.source import Source
+from interpreter.scanner import Scanner
 
 
 class MockSource(Source):

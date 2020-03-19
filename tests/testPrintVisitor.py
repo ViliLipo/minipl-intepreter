@@ -1,9 +1,9 @@
 import unittest
 
-from intepreter.source import Source
-from intepreter.scanner import Scanner
-from intepreter.parser import Parser
-from intepreter.printvisitor import PrintVisitor
+from interpreter.source import Source
+from interpreter.scanner import Scanner
+from interpreter.parser import Parser
+from interpreter.printvisitor import PrintVisitor
 
 
 class TestPrintVisitor(unittest.TestCase):

@@ -68,6 +68,10 @@ Also the `tests/test.minipl' includes all the examples given
 in the language specification.
 
 \subsection{Shortcomings}
+The interpreter is mostly fully featured. The parser is bit lacking
+in the error handling part, as in most of the statements, if a 
+necessary token is missing the parsing of that statement will fail,
+and the exception handler will try to parse a new statement all together.
 
 \subsection{Running the program}
 
@@ -89,6 +93,7 @@ python main.py ./tests/test.minipl
 <range> = \.\.
 <keyword> = var | for | end | in | do | read 
 <keyword> =  print | int | string | bool | assert
+<operator> = + | - | / | * | & | !
 \end{verbatim}
 
 \subsection{Context-free grammar}
@@ -118,6 +123,9 @@ python main.py ./tests/test.minipl
 \end{verbatim}
 
 \subsection{Abstract syntax tree}
+The abstract syntax tree used in the interpreter, uses the composite pattern and visitor
+pattern is used to manipulate the tree. The base class Node and its descendants are
+defined in the file `./interpreter/ast.py'
 
 \subsection{Error Handling}
 

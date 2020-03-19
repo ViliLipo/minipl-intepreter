@@ -1,5 +1,5 @@
 import unittest
-from intepreter.source import Source
+from interpreter.source import Source
 
 
 class TestSourceMethods(unittest.TestCase):

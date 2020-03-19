@@ -1,8 +1,8 @@
-from intepreter.visitor import Visitor
+from interpreter.visitor import Visitor
 from math import floor
 
 
-class InterpretingVisitor():
+class InterpretingVisitor(Visitor):
 
     def __init__(self, symboltable):
         self.symboltable = symboltable
@@ -34,12 +34,14 @@ class InterpretingVisitor():
         child.accept(self)
         value = str(child.evalValue)
         text = value.replace('\\n', "\n")
+        text = text.replace('\\t', '\t')
         print(text, end='')
 
     def visitReadNode(self, node):
         child = node.getTargetChild()
         identifier = child.symbol.lexeme
         varType, value = self.symboltable.get(identifier)
+        print("\n--> ", end="")
         newValue = input()
         if newValue.isdigit() and varType == 'int':
             self.symboltable[identifier] = (varType, int(newValue))
@@ -51,7 +53,7 @@ class InterpretingVisitor():
         argChild.accept(self)
         value = argChild.evalValue
         if not value:
-            print('Assertion error at {}'
+            print('Assertion error at {}..'
                   .format(argChild.symbol.startposition))
 
     def visitExprNode(self, node):
@@ -119,7 +121,7 @@ class InterpretingVisitor():
         end = node.getEndNode()
         end.accept(self)
         endValue = end.evalValue + 1
-        node.setEvalValue(range(startValue, endValue))
+        node.setEvalValue((startValue, endValue))
 
     def visitForNode(self, node):
         condition = node.getConditionChild()
@@ -128,9 +130,11 @@ class InterpretingVisitor():
         body = node.getBodyChild()
         identifier = condition.getRefChild().symbol.lexeme
         t, var = self.symboltable[identifier]
-        for i in ran:
+        i = ran[0]
+        while i < ran[1]:
             self.symboltable[identifier] = (t, i)
             body.accept(self)
+            i = i + 1
 
     def visitNode(self, node):
         pass

@@ -1,11 +1,11 @@
 import unittest
 
-from intepreter.source import Source
-from intepreter.scanner import Scanner
-from intepreter.parser import Parser
-from intepreter.interpretingvisitor import InterpretingVisitor
-from intepreter.typecheckvisitor import TypeCheck
-from intepreter.printvisitor import PrintVisitor
+from interpreter.source import Source
+from interpreter.scanner import Scanner
+from interpreter.parser import Parser
+from interpreter.interpretingvisitor import InterpretingVisitor
+from interpreter.typecheckvisitor import TypeCheck
+from interpreter.printvisitor import PrintVisitor
 
 
 class TestInterpretingVisitor(unittest.TestCase):

@@ -1,5 +1,5 @@
-from intepreter.ast import makeNode
-from intepreter.ast import ErrorNode
+from interpreter.ast import makeNode
+from interpreter.ast import ErrorNode
 
 
 class ParsingError(Exception):

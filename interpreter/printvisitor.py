@@ -1,4 +1,4 @@
-from intepreter.visitor import Visitor
+from interpreter.visitor import Visitor
 
 
 class PrintVisitor(Visitor):
