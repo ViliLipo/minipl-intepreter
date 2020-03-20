@@ -2,6 +2,15 @@ from interpreter.visitor import Visitor
 from math import floor
 
 
+def get_input():
+    output('\n-->')
+    return input()
+
+
+def output(text):
+    print(text, end='')
+
+
 class InterpretingVisitor(Visitor):
 
     def __init__(self, symboltable):
@@ -33,16 +42,14 @@ class InterpretingVisitor(Visitor):
         child = node.getPrintableChild()
         child.accept(self)
         value = str(child.evalValue)
-        text = value.replace('\\n', "\n")
-        text = text.replace('\\t', '\t')
-        print(text, end='')
+        text = value
+        output(text)
 
     def visitReadNode(self, node):
         child = node.getTargetChild()
         identifier = child.symbol.lexeme
         varType, value = self.symboltable.get(identifier)
-        print("\n--> ", end="")
-        newValue = input()
+        newValue = get_input()
         if newValue.isdigit() and varType == 'int':
             self.symboltable[identifier] = (varType, int(newValue))
         elif varType == 'string':
@@ -53,8 +60,8 @@ class InterpretingVisitor(Visitor):
         argChild.accept(self)
         value = argChild.evalValue
         if not value:
-            print('Assertion error at {}..'
-                  .format(argChild.symbol.startposition))
+            output('Assertion error at line {}.\n'
+                   .format(argChild.symbol.startposition[1]))
 
     def visitExprNode(self, node):
         op = node.symbol.tokenType
@@ -65,29 +72,24 @@ class InterpretingVisitor(Visitor):
         rhs = node.getRhsChild()
         rhs.accept(self)
         rhsValue = rhs.evalValue
-        if lhsType == 'int':
-            if op == '+':
-                node.setEvalValue(rhsValue + lhsValue)
-            if op == '-':
-                node.setEvalValue(lhsValue - rhsValue)
-            if op == '*':
-                node.setEvalValue(lhsValue * rhsValue)
-            if op == '/':
-                node.setEvalValue(floor(lhs / rhs))
-            if op == '=':
-                node.setEvalValue(lhsValue == rhsValue)
-        elif lhsType == 'string':
-            if op == '+':
-                node.setEvalValue(lhsValue + rhsValue)
-            if op == '=':
-                node.setEvalValue(lhsValue == rhsValue)
-        elif lhsType == 'bool':
-            if op == '&':
-                node.setEvalValue(lhsValue and rhsValue)
+        if lhsType in ['int', 'string', 'bool']:
             if op == '=':
                 node.setEvalValue(lhsValue == rhsValue)
             if op == '<':
                 node.setEvalValue(lhsValue < rhsValue)
+        if lhsType in ['int', 'string']:
+            if op == '+':
+                node.setEvalValue(lhsValue + rhsValue)
+        if lhsType == 'int':
+            if op == '*':
+                node.setEvalValue(lhsValue * rhsValue)
+            if op == '/':
+                node.setEvalValue(floor(lhsValue / rhsValue))
+            if op == '-':
+                node.setEvalValue(lhsValue - rhsValue)
+        if lhsType == 'bool':
+            if op == '&':
+                node.setEvalValue(lhsValue and rhsValue)
 
     def visitIntegerNode(self, node):
         lexeme = node.symbol.lexeme

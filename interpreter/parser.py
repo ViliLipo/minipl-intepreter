@@ -21,7 +21,7 @@ class Parser:
             self.readStatement,
         ]
 
-    operators = ['+', '-', '/', '*', '&', '|', '=']
+    operators = ['+', '-', '/', '*', '&', '|', '=', '<']
 
     def nextToken(self):
         self.symbol = self.scanner.scanNextToken()

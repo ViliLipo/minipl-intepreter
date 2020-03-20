@@ -100,6 +100,59 @@ class TestScannerMethods(unittest.TestCase):
         self.assertTrue('error' in types)
         self.assertTrue('eof' in types)
 
+    def testIdentifierWithNumbers(self):
+        lines = ['var s1: string:= "Hello";']
+        src = MockSource(lines)
+        scanner = Scanner(src)
+        lexemes = []
+        while not src.eof():
+            token = scanner.scanNextToken()
+            lexemes.append(token.lexeme)
+        self.assertIn('s1', lexemes)
+
+    def testIdentifierWithUnderScore(self):
+        lines = ['var hello_str: string:= "Hello";']
+        src = MockSource(lines)
+        scanner = Scanner(src)
+        lexemes = []
+        while not src.eof():
+            token = scanner.scanNextToken()
+            lexemes.append(token.lexeme)
+        self.assertIn('hello_str', lexemes)
+
+    def testNestedComments(self):
+        lines = ['/* Yes /* No */ */']
+        src = MockSource(lines)
+        scanner = Scanner(src)
+        types = []
+        while not src.eof():
+            token = scanner.scanNextToken()
+            types.append(token.tokenType)
+        self.assertTrue(len(types) == 1)
+        self.assertIn('eof', types)
+
+    def testStringLiteral(self):
+        lines = ['"Hello World!"']
+        src = MockSource(lines)
+        scanner = Scanner(src)
+        lexemes = []
+        while not src.eof():
+            token = scanner.scanNextToken()
+            lexemes.append(token.lexeme)
+        self.assertTrue(len(lexemes) == 1)
+        self.assertEqual(lines[0], lexemes[0])
+
+    def testEscapeCharacters(self):
+        lines = ['"\\"Donkey Kong!\\""']
+        src = MockSource(lines)
+        scanner = Scanner(src)
+        lexemes = []
+        while not src.eof():
+            token = scanner.scanNextToken()
+            lexemes.append(token.lexeme)
+        self.assertTrue(len(lexemes) == 1)
+        self.assertEqual('"\"Donkey Kong!\""', lexemes[0])
+
 
 if __name__ == '__main__':
     unittest.main()

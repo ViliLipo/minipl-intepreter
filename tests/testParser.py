@@ -68,8 +68,14 @@ class TestParserMethod(unittest.TestCase):
         subExpr = expression.getRhsChild()
         self.assertEqual('=', subExpr.symbol.lexeme)
 
+    def testParseBooleanExpressionAndAssert(self):
+        lines = ['assert(1 < 2);']
+        parser = self.__initparser__(lines)
+        program = parser.program()
+        assertNode = program.children[0]
+        self.assertEqual('<', assertNode.getArgumentChild().symbol.lexeme)
+
     def testMissingSemiColon(self):
-        # TODO
         lines = ['var x : int := 3 + 5\n'
                  'var y: int;']
         parser = self.__initparser__(lines)
@@ -78,7 +84,7 @@ class TestParserMethod(unittest.TestCase):
                  'var y: int;']
         parser = self.__initparser__(lines)
         program = parser.program()
-        print(program)
+        self.assertTrue(len(program.children) == 2)
 
     def testRunawayParenthesis(self):
         lines = ['var ok : bool := !( 1 = 0;\n',

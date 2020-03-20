@@ -231,7 +231,7 @@ def makeNode(symbol=None):
         return RefNode(symbol)
     elif tokenType == ':=':
         return AssignNode(symbol)
-    elif tokenType in ['+', '-', '*', '/', '=']:
+    elif tokenType in ['+', '-', '*', '/', '=', '&', '<']:
         return ExprNode(symbol)
     elif tokenType == '!':
         return UnaryExprNode(symbol)

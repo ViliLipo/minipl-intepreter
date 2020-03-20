@@ -7,6 +7,14 @@ from interpreter.typecheckvisitor import TypeCheck
 from interpreter.printvisitor import PrintVisitor
 
 
+def header():
+    msg = 'Mini-pl interpreter by Vili Lipo. \n' \
+        + 'Licence GPL 3 \n' \
+        + 'Helsinki, Finland  2020\n' \
+        + '------------------------- '
+    print(msg)
+
+
 def setup(filename):
     src = Source(filename)
     scanner = Scanner(src)
@@ -27,18 +35,26 @@ def run(ast, errors):
 
 
 def main():
-    if len(argv) == 2:
-        fname = argv[1]
-        ast, errors = setup(fname)
-        if len(errors) == 0:
-            run(ast, errors)
-        else:
-            for error in errors:
-                print(error)
+    header()
+    try:
+        if len(argv) == 2:
+            fname = argv[1]
+            ast, errors = setup(fname)
+            if len(errors) == 0:
+                run(ast, errors)
+            else:
+                for error in errors:
+                    print(error)
 
-    else:
-        print("Give filename as cli parameter.")
-    pass
+        else:
+            print("Give filename as cli parameter.")
+        pass
+    except KeyboardInterrupt:
+        pass
+    except SystemExit:
+        pass
+    finally:
+        print('\nGoodbye!\n')
 
 
 if __name__ == "__main__":

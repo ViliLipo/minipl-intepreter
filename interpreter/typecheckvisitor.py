@@ -9,7 +9,7 @@ class TypeError():
 
     def __str__(self):
         return self.description + ": on line "\
-            + str(self.symbol.startposition[1])
+            + str(self.symbol.startposition[1]) + "."
 
     def __repr__(self):
         return self.__str__()
@@ -40,11 +40,12 @@ class TypeCheck(Visitor):
         refChild = node.getRefChild()
         identifier = refChild.symbol.lexeme
         typeChild = node.getTypeChild()
+        typeChild.accept(self)
         identifierType = typeChild.symbol.lexeme
         found = self.symbolTable.get(identifier)
         if found is not None:
             symbol = refChild.symbol
-            error = TypeError('already defined', symbol)
+            error = TypeError('Declaration of an existing variable', symbol)
             self.errors.append(error)
         else:
             self.symbolTable[identifier] = (
@@ -66,8 +67,7 @@ class TypeCheck(Visitor):
             rhs.accept(self)
             resultType = rhs.evalType
             if varType != resultType:
-                print(varType, resultType)
-                error = TypeError('assigment to uncombatible type', symbol)
+                error = TypeError('Assignment to an uncompatible type', symbol)
                 self.errors.append(error)
         else:
             error = TypeError('Assigment to undefied variable', node.symbol)
@@ -89,7 +89,18 @@ class TypeCheck(Visitor):
         self.__visit__(node)
 
     def visitReadNode(self, node):
-        self.__visit__(node)
+        child = node.getTargetChild()
+        child.accept(self)
+        eType = child.evalType
+        cName = child.__class__.__name__
+        if cName != 'RefNode':
+            error = TypeError('Read must happen to a variable',
+                              node.symbol)
+            self.errors.append(error)
+        elif eType not in ['int', 'string']:
+            error = TypeError('Read must happen to a string or int variable',
+                              node.symbol)
+            self.errors.append(error)
 
     def visitAssertNode(self, node):
         argChild = node.getArgumentChild()
@@ -98,6 +109,7 @@ class TypeCheck(Visitor):
         if argChildType != 'bool':
             error = TypeError('Assert must have a boolean parameter',
                               node.symbol)
+            self.errors.append(error)
 
     def visitExprNode(self, node):
         op = node.symbol.tokenType
@@ -117,7 +129,7 @@ class TypeCheck(Visitor):
             elif lhsType == 'bool' and op in TypeCheck.boolOps:
                 node.setEvalType('bool')
             else:
-                error = TypeError("Cannot apply {} to {}".format(
+                error = TypeError("Can not apply {} to {}".format(
                     op, lhsType), node.symbol)
                 self.errors.append(error)
                 node.setEvalType('error')
@@ -169,6 +181,10 @@ class TypeCheck(Visitor):
         if rhsType == 'bool':
             node.setEvalType('bool')
         else:
+            error = TypeError(
+                'Unary ! can only operate on boolean expressions',
+                node.symbol)
+            self.errors.append(error)
             node.setEvalType('error')
 
     def visitNode(self, node):

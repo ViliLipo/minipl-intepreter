@@ -94,19 +94,35 @@ class Scanner:
         if src.peek() == '"':
             lexeme = src.getChar()
             while src.peek() != '"':
-                lexeme = lexeme + src.getChar()
-            if src.peek() == '"':
-                lexeme = lexeme + src.getChar()
+                if src.peek() == '\\':
+                    src.getChar()
+                    lexeme = Scanner\
+                        .__handleEscapeCharacters__(src, lexeme)
+                else:
+                    lexeme = lexeme + src.getChar()
+            lexeme = lexeme + src.getChar()
             return Token('string_literal',
                          lexeme, startPos,
                          src.getCurrentPosition())
         return False
 
+    def __handleEscapeCharacters__(src, lexeme):
+        char = src.getChar()
+        if char == '\\':
+            lexeme = lexeme + '\\'
+        if char == 'n':
+            lexeme = lexeme + '\n'
+        elif char == 't':
+            lexeme = lexeme + '\t'
+        elif char == '"':
+            lexeme = lexeme + '"'
+        return lexeme
+
     def scanIdentifierOrKeyword(src):
         startPos = src.getCurrentPosition()
         if src.peek().isalpha():
             lexeme = ''
-            while src.peek().isalpha() or src.peek() == '_':
+            while src.peek().isalnum() or src.peek() == '_':
                 lexeme = lexeme + src.getChar()
             if lexeme in Scanner.keywords:
                 return Token(lexeme, lexeme,
@@ -165,13 +181,21 @@ class Scanner:
         if src.peek() == '/':
             src.getChar()
             if src.peek() == '*':
+                openCount = 1
                 while not src.eof():
                     src.getChar()
+                    if src.peek() == '/':
+                        src.getChar()
+                        if src.peek() == '*':
+                            src.getChar()
+                            openCount = openCount + 1
                     if src.peek() == '*':
                         src.getChar()
                         if src.peek() == '/':
                             src.getChar()
-                            return True
+                            openCount = openCount - 1
+                            if openCount == 0:
+                                return True
                 raise LexicalError('Runaway comment')
             else:
                 src.reverseOnePosition()

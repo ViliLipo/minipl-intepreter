@@ -15,4 +15,3 @@ class TestPrintVisitor(unittest.TestCase):
         ast = parser.program()
         pv = PrintVisitor()
         ast.accept(pv)
-        print(pv.result)
