@@ -10,7 +10,7 @@ class Source:
             self.lines.append(line)
         f.close()
 
-    def __handleline__(self):
+    def __handleLineChange__(self):
         if self.columnNumber >= len(self.lines[self.rowNumber]):
             self.rowNumber = self.rowNumber + 1
             self.columnNumber = 0
@@ -23,7 +23,7 @@ class Source:
             return ''
         char = self.lines[self.rowNumber][self.columnNumber]
         self.columnNumber = self.columnNumber + 1
-        self.__handleline__()
+        self.__handleLineChange__()
         return char
 
     def peek(self):
@@ -31,6 +31,7 @@ class Source:
             if self.columnNumber < len(self.lines[self.rowNumber]):
                 return self.lines[self.rowNumber][self.columnNumber]
             elif self.rowNumber + 1 < len(self.lines):
+                # The next character starts a new line.
                 return self.lines[self.rowNumber + 1][0]
             else:
                 return ''
@@ -49,7 +50,10 @@ class Source:
         if (self.columnNumber == 0 and self.rowNumber == 0):
             return
         elif self.columnNumber == 0:
-            self.rowNumber = self.rowNumber - 1
-            self.columnNumber = len(self.lines[self.rowNumber]) - 1
+            self.__reverseOverLine__()
         else:
             self.columnNumber = self.columnNumber - 1
+
+    def __reverseOverLine__(self):
+        self.rowNumber = self.rowNumber - 1
+        self.columnNumber = len(self.lines[self.rowNumber]) - 1

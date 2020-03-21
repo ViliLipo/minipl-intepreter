@@ -49,11 +49,16 @@ class InterpretingVisitor(Visitor):
         child = node.getTargetChild()
         identifier = child.symbol.lexeme
         varType, value = self.symboltable.get(identifier)
-        newValue = get_input()
-        if newValue.isdigit() and varType == 'int':
-            self.symboltable[identifier] = (varType, int(newValue))
-        elif varType == 'string':
-            self.symboltable[identifier] = (varType, str(newValue))
+        while True:
+            newValue = get_input()
+            if newValue.isdigit() and varType == 'int':
+                self.symboltable[identifier] = (varType, int(newValue))
+                break
+            elif varType == 'string':
+                self.symboltable[identifier] = (varType, str(newValue))
+                break
+            else:
+                output('Input has mismatched type.\n')
 
     def visitAssertNode(self, node):
         argChild = node.getArgumentChild()

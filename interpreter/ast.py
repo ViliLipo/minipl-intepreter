@@ -20,9 +20,6 @@ class Node:
     def __repr__(self):
         return str(self)
 
-    def isLeaf(self):
-        return len(self.children) == 0
-
     def addChild(self, node):
         self.children.append(node)
 

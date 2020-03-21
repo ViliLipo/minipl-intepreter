@@ -8,12 +8,14 @@
 \usepackage{tikz}
 \usepackage{pgfplots}
 \usepackage{listings}
+\usepackage{datetime2}
+\usepackage{booktabs}
 \pgfplotsset{compat=1.16}
 \restylefloat{table}
 \graphicspath{{Images/}}
 
 
-
+\AtBeginDocument{\let\today\DTMNow}
 \author{Vili Lipo, 014814253}
 \title{Compilers Project 2020: Mini-pl interpreter documentation}
 \begin{document}
@@ -21,25 +23,40 @@
 \newpage
 
 \section{General view of the application}
-\subsection{Architecture}
+The goal of this project was to write an interpreter for 
+Mini-pl programming language. The default implementation language
+for the project was C\#, but I chose to use Python, because
+I am not familiar with C\#. Even though I used Python, I tried
+to follow the models and patterns given in the course lectures 
+as best I could. The source code for this project should be 
+understandable to all who have knowledge of the common patterns
+and techniques used in compilers.
 
+In the source code of the project there are few comments, as I tried to write
+the code itself in a way that is easy to read. I did not feel the need to state
+the obvious twice, once in code and the second time as a comment.
+Unnecessarily repeating what the code does in comments is an anti-pattern that
+has no place in my projects.
+
+\subsection{Architecture}
 \begin{figure}[t]\label{big_uml}
   \caption{UML diagram of the interpreter architecture}
   \includegraphics[scale=0.4]{reportImages/interpreter.png}
 \end{figure}
 The architecture of my implementation of Mini-pl interpreter
 follows closely the pipeline pattern presented on the lectures.
-The interpreter uses a multi-pass construction, as all of the
+The interpreter uses multi-pass construction, as all
 parsing is done before semantical analysis, and all semantical
-analysis is done before the interpreting. The scanning
+analysis is done before the interpreting. Although scanning
 is driven by the parser, like in single pass compilers.
 
+Overall architecture of the interpreter can be observed in figure~\ref{big_uml}.
 At the lowest level we have the class Source, that is responsible
 for reading a source file and giving characters from it one by one.
 
 This is given as a constructor parameter to the class Scanner following
 the dependency injection pattern. Scanner
-does the lexical analysis of the characters, and forms tokens out
+does the lexical analysis of characters, and forms tokens out
 of them. The Scanner consists of a collection of routines that
 try to form a token by iterating the source. When a next
 token is asked from the scanner it screens out whitespace and
@@ -47,20 +64,22 @@ comments and then it iterates through these
 routines until one of them returns a valid token. If no
 valid token is produced the scanner returns an error token.
 
-When the source reaches the end-of-file the scanner produces
+When the source reaches the end-of-file, the scanner produces
 end of file token.
 
 The parser is a recursive descent parser that asks for the tokens
-one by one from the scanner. Every construct in the language has
-a own method for parsing it. These methods produce abstract syntax 
-tree nodes. The overall architecture can be observed in figure~\ref{big_uml}.
+one by one from the scanner. Every non-terminal construct in the language has
+an own method for parsing it. These methods produce abstract syntax 
+tree nodes. 
+The parser tries to parse new statements until the scanner produces
+end of file token.
 
-The abstract syntax tree produced by the parser
+An abstract syntax tree produced by the parser
 is first decorated by the TypeCheckVisitor, that
 checks for semantical errors and creates a symbol table
 based on variable declarations.
 
-The table created by TypeCheckVisitor is then used by
+Symbol table created by TypeCheckVisitor is then used by
 InterpretingVisitor that interprets the source file.
 InterpretingVisitor further decorates the abstract 
 syntax tree by setting evaluation values to the nodes,
@@ -72,13 +91,25 @@ as it goes through the program.
 
 The classes Source, Scanner and Parser have quite comprehensive
 unit tests written to test their core functionality. Those
-can be found in the '/tests' folder. I have taken care in 
+can be found in the '/tests' folder. The tests for
+InterpretingVisitor and TypeCheckVisitor are more in 
+the integration test category.
+
+I have taken care in 
 designing these test cases and at least the tests for the
 InterpretingVisitor and TypeCheckVisitor are worth to 
-take look at.
-Also the `tests/test.minipl' includes all the examples given
+take look at. The Mini-pl code lines run on these tests
+should give a good idea of the capabilities of this
+interpreter.
+
+Also, the `tests/test.minipl' includes all the examples given
 in the language specification.
 The tests contain cases for producing correct error messages.
+I included a code coverage report of the unit testing as
+Figure~\ref{codecov}. Total code coverage of my tests cases
+is 95\%, which includes the most important corner cases
+and edge behaviour in addition to normal happy path tests.
+
 
 \begin{figure}\label{codecov}
   \caption{Unit and integration test code coverage}
@@ -110,11 +141,16 @@ TOTAL                                 1482     72    95%
 
 The interpreter is mostly fully featured. 
 The scanner supports only a limited set of escape characters that are
-tabs, newlines, escape character and the quotation mark.
+tabs, newlines, escape character and the quotation mark. This could
+be quite easily expanded. 
+
 The parser is bit lacking
 in the error handling part, as in most of the statements, if a 
 necessary token is missing the parsing of that statement will fail,
 and the exception handler will try to parse a new statement all together.
+This could be fixed by adding more detailed error handling to the
+different statement variant methods in the Parser class. That would
+make the code messier in the other hand, so I decided against it.
 
 The Source class does not use any form of fancy buffering. It just reads
 the whole file to a list of strings in its constructor. I did not think
@@ -124,14 +160,26 @@ languages most code style guides prefer files under five hundred lines with
 a line length under 100 characters. Any modern computer is able to hold
 5000 characters in its memory with no issues.
 
+The visitor pattern is a bit ugly to implement in Python,
+as it is not possible to overload methods by parameter types.
+Despite this I think that I managed to write it in quite
+readable fashion.
+
 \subsection{Running the program}
 
 On Linux-machines running this program should be very straight forward.
 Open the directory where the archive was unzipped in a terminal.
 Then running 
-`python3 main.py ./tests/test.minipl'
-There is no additional external dependencies in runnign the program,
+`python3 main.py  examples/tree.minipl'
+to execute the example tree drawing program.
+There is no additional external dependencies in running the program,
 everything should be included in the python standard library.
+I was able to run the program on the CS department remote shell
+with no issues using the above command. Unit tests also worked
+with the command `python3 -m unittest discover tests'
+Generating the code coverage report would require installing 
+additional python3 packages on Ubuntu 16.04 so I included it in the 
+report as Figure~\ref{codecov}.
 
 
 \section{Specifying the interpretation}
@@ -181,8 +229,19 @@ The modified context-free grammar for Mini-pl can be seen in figure~\ref{cfg}
 
 \subsection{Abstract syntax tree}
 The abstract syntax tree used in the interpreter, uses the composite pattern and visitor
-pattern is used to manipulate the tree. The base class Node and its descendants are
-defined in the file `./interpreter/ast.py'
+pattern is used to manipulate the tree. 
+
+The abstract syntax tree consists of Nodes. For each meaningful part of the
+Mini-pl language I have created a subclass that inherits Node class. These
+classes are listed in the figure~\ref{big_uml}. These classes are used with the
+visitor pattern to do semantic analysis and interpreting.
+
+The different classes inheriting Node class are very similar. They mostly 
+differ in that some have special accessors for meaningful children nodes, like
+ExprNode has methods getRhsChild, and getLhsChild.
+
+The different visitors in this interpreter inherit the abstract class Visitor.
+These objects have distinct methods for visiting all of the different nodes.
 
 \subsection{Error Handling}
 
@@ -196,6 +255,9 @@ another symbol next, that is in its first set.
 
 Semantic errors are discovered by TypeCheckVisitor.
 These errors are printed to the user and prevent the interpreting process.
+Semantic errors include usage of undeclared variables, declaring declared variables,
+assigning to a wrong type, using mismatched types in expressions and assigning
+to a loop variable inside a loop.
 
 \subsection{Semantics of Mini-pl}
 
@@ -204,10 +266,56 @@ it seems that the loop variable should be one over the upper limit of the
 specified range. In my implementation when the loop ends, the loop variable
 is the upper limit of the range. In essence my range is a open interval.
 
+For the read command I decided that the strings can be a whole line,
+not just a one word. It just is more flexible that way.
+
 As for variable default values I have chosen 0 for integer, empty string for string, and 
 false for boolean.
 
 \section{Work hour log}
+\begin{center}
+  \begin{tabular}{l l l}
+    \bottomrule
+    Date & Duration & Task \\
+    2.3 & 2h & Creating class Source \\
+    \bottomrule
+    3.3 & 1h & Initial testing of Source \\
+    \bottomrule
+    4.3 & 3h & Creating Scanner \\
+    \bottomrule
+    5.3 & 2h & Initial testing of Scanner \\
+    \bottomrule
+    9.3 & 1h & Creating recursive parser \\
+    \bottomrule
+    9.3 & 2h & Creating AST \\
+    \bottomrule
+    10.3 & 1h & Fixing source and scanner \\
+    \bottomrule
+    10.3 & 3h & Creating AST \\
+    \bottomrule
+    11.3 & 4h & Writing visitor abstract class and printvisitor \\
+    \bottomrule
+    13.3 & 6h & Writing TypeCheckVisitor and InterpretingVisitor \\
+    \bottomrule
+    16.3 & 3h & Finishing InterpretingVisitor and adding a launcher \\
+    \bottomrule
+    17.3 & 3h & Error handling in parsing \\
+    \bottomrule
+    17.3 & 2h & Testing. \\
+    \bottomrule
+    18.3 & 3h & Testing and bugfixing and adding missing features \\
+    \bottomrule
+    18.3 & 1h & Starting report. \\
+    \bottomrule
+    19.3 & 3h & Testing and bugfixing and adding missing features \\
+    \bottomrule
+    20.3 & 5h & Testing and bugfixing and adding missing features \\
+    \bottomrule
+    21.3 & 4h & Writing report and validating requirements \\
+    Total & 49h & Total \\
+  \end{tabular}
+
+\end{center}
 
 
 

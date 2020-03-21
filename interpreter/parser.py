@@ -218,10 +218,8 @@ class Parser:
             else:
                 return lhs
         except ParsingError as e:
-            while True:
-                if self.symbol.tokenType == 'eof':
-                    raise e
-                self.nextToken()
+            # Only error operand or operator will raise is eof
+            raise e
 
     def operand(self, followset):
         try:

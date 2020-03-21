@@ -31,7 +31,7 @@ class Scanner:
             Scanner.scanIdentifierOrKeyword,
             Scanner.scanNumber,
             Scanner.scanString,
-            Scanner.scanOperand,
+            Scanner.scanOperator,
             Scanner.scanSemicolon,
             Scanner.scanColonOrIdent,
             Scanner.scanBrackets,
@@ -56,12 +56,13 @@ class Scanner:
         return errortoken
 
     def screening(self):
-        value = True
-        while value:
+        commentFound = True
+        while commentFound:
             self.screenWhiteSpace()
-            value = Scanner.screenMultilineComment(self.src)
+            commentFound = Scanner.screenMultilineComment(self.src)
             self.screenWhiteSpace()
-            value = value or Scanner.screenSingleLineComment(self.src)
+            commentFound = (commentFound
+                            or Scanner.screenSingleLineComment(self.src))
 
     def screenWhiteSpace(self):
         while (self.src.peek() in [' ', '\t', '\n']):
@@ -96,7 +97,6 @@ class Scanner:
             lexeme = src.getChar()
             while src.peek() != '"':
                 if src.peek() == '\\':
-                    src.getChar()
                     lexeme = Scanner\
                         .__handleEscapeCharacters__(src, lexeme)
                 else:
@@ -108,6 +108,7 @@ class Scanner:
         return False
 
     def __handleEscapeCharacters__(src, lexeme):
+        src.getChar()
         char = src.getChar()
         if char == '\\':
             lexeme = lexeme + '\\'
@@ -132,7 +133,7 @@ class Scanner:
                          startPos, src.getCurrentPosition())
         return False
 
-    def scanOperand(src):
+    def scanOperator(src):
         startPos = src.getCurrentPosition()
         if src.peek() in ['+', '-', '*', '/', '<', '=', '&', '!']:
             lexeme = src.getChar()
