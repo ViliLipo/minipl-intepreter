@@ -34,3 +34,4 @@ for i in 0..(maxwidth-1)/2 do
   s := s + " ";
 end for;
 print(s + "\n");
+assert(width = maxwidth);

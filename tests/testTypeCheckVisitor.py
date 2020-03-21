@@ -171,3 +171,12 @@ class TestTypeCheckVisitor(TestCase):
         correctMsg = \
             'Unary ! can only operate on boolean expressions: on line 1.'
         self.__errortest__(lines, correctMsg)
+
+    def testAssigmentToLoopVariableError(self):
+        lines = ['var i: int;\n', 'for i in 0..10 do\n',
+                 'i := i + 1; \n', 'print i;',
+                 'end for;'
+                 ]
+        correctMsg = \
+            'Assignment to a loop variable i: on line 3.'
+        self.__errortest__(lines, correctMsg)

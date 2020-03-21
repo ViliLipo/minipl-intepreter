@@ -20,6 +20,7 @@ class TypeCheck(Visitor):
     def __init__(self):
         self.symbolTable = {}
         self.errors = []
+        self.loopVariables = set()
 
     intOps = ['+', '-', '*', '/', '=', '<']
     strOps = ['+', '=', '<']
@@ -61,7 +62,7 @@ class TypeCheck(Visitor):
         symbol = lhs.symbol
         identifier = symbol.lexeme
         var = self.symbolTable.get(identifier)
-        if var is not None:
+        if var is not None and identifier not in self.loopVariables:
             varType, oldValue = var
             rhs = node.getRhsChild()
             rhs.accept(self)
@@ -70,7 +71,13 @@ class TypeCheck(Visitor):
                 error = TypeError('Assignment to an uncompatible type', symbol)
                 self.errors.append(error)
         else:
-            error = TypeError('Assigment to undefied variable', node.symbol)
+            error = None
+            if identifier in self.loopVariables:
+                error = TypeError('Assignment to a loop variable {}'.format(
+                    identifier), node.symbol)
+            else:
+                error = TypeError('Assigment to undefined variable',
+                                  node.symbol)
             self.errors.append(error)
 
     def visitRefNode(self, node):
@@ -172,7 +179,14 @@ class TypeCheck(Visitor):
             self.errors.append(error)
 
     def visitForNode(self, node):
-        self.__visit__(node)
+        condition = node.getConditionChild()
+        condition.accept(self)
+        loopVar = condition.getRefChild()
+        identifier = loopVar.symbol.lexeme
+        self.loopVariables.add(identifier)
+        body = node.getBodyChild()
+        body.accept(self)
+        self.loopVariables.discard(identifier)
 
     def visitUnaryExprNode(self, node):
         rhs = node.getRhsChild()

@@ -62,6 +62,9 @@ based on variable declarations.
 
 The table created by TypeCheckVisitor is then used by
 InterpretingVisitor that interprets the source file.
+InterpretingVisitor further decorates the abstract 
+syntax tree by setting evaluation values to the nodes,
+as it goes through the program.
 
 
 
@@ -75,10 +78,31 @@ InterpretingVisitor and TypeCheckVisitor are worth to
 take look at.
 Also the `tests/test.minipl' includes all the examples given
 in the language specification.
+The tests contain cases for producing correct error messages.
 
 \begin{figure}\label{codecov}
+  \caption{Unit and integration test code coverage}
   \begin{verbatim}
-  coming soon..
+Name                                 Stmts   Miss  Cover
+--------------------------------------------------------
+interpreter/__init__.py                  0      0   100%
+interpreter/ast.py                     179     13    93%
+interpreter/interpretingvisitor.py     124      8    94%
+interpreter/parser.py                  213     16    92%
+interpreter/printvisitor.py             49      2    96%
+interpreter/scanner.py                 153      3    98%
+interpreter/source.py                   40      7    82%
+interpreter/typecheckvisitor.py        157      5    97%
+interpreter/visitor.py                  47     15    68%
+tests/__init__.py                        0      0   100%
+tests/testInterpretingVisitor.py        70      0   100%
+tests/testParser.py                    160      0   100%
+tests/testPrintVisitor.py               13      0   100%
+tests/testScanner.py                   123      1    99%
+tests/testSource.py                     23      1    96%
+tests/testTypeCheckVisitor.py          131      1    99%
+--------------------------------------------------------
+TOTAL                                 1482     72    95%
   \end{verbatim}
 \end{figure}
 
@@ -92,6 +116,13 @@ in the error handling part, as in most of the statements, if a
 necessary token is missing the parsing of that statement will fail,
 and the exception handler will try to parse a new statement all together.
 
+The Source class does not use any form of fancy buffering. It just reads
+the whole file to a list of strings in its constructor. I did not think
+that any buffering of source was justified as most of the programs 
+that would be written using Mini-pl are short. Even in very powerful
+languages most code style guides prefer files under five hundred lines with
+a line length under 100 characters. Any modern computer is able to hold
+5000 characters in its memory with no issues.
 
 \subsection{Running the program}
 
@@ -110,13 +141,13 @@ The token patterns can be observed in figure~\ref{token_patterns}
 \begin{figure}\label{token_patterns}
   \caption{Mini-PL token patterns}
   \begin{verbatim}
-  <integer> = <digit>*
+  <integer> ::= <digit>*
   <string_literal> = "<alnum>*"
   <identifier> = ([a-z] | [A-Z])([a-z] | [A-Z] | _ | [0-9])*
-  <range> = \.\.
-  <keyword> = var | for | end | in | do | read 
-  <keyword> =  print | int | string | bool | assert
-  <operator> = + | - | / | * | & | !
+  <range> ::= \.\.
+  <keyword> ::= var | for | end | in | do | read 
+  <keyword> ::=  print | int | string | bool | assert
+  <operator> ::= + | - | / | * | & | !
   \end{verbatim}
 \end{figure}
 
@@ -125,28 +156,26 @@ The modified context-free grammar for Mini-pl can be seen in figure~\ref{cfg}
 \begin{figure}\label{cfg}
   \caption{Modified LL (1) grammar for Mini-pl}
   \begin{verbatim}
-  <prog> = <stmnts>
-  <stmts> = <stmnt> ";" <stmnts>
-  <stmnts> = <epsilon>
-  <stmnt> = "var" <var_ident> ":" <type> <assign_value>
-  <stmnt> = <var_ident> ":=" <expr>
-  <stmnt = "for" <var_ident> "in" <expr> ".." <expr> "do"
-                <stmnts> "end" "for"
-  <stmnt> = "read" <var_ident> 
-  <stmnt> =  "print" <expr>
-  <stmnt> "assert" "(" <expr> ")"
-  <assign_value> = ":=" <expr>| <epsilon>
-  <expr> = <opnd> <op> <opnd>
-  <opnd> = <int>
-  <opnd> = <string>
-  <opnd> = <var_ident>
-  <opnd> = "(" <expr> ")"
-  <type> = "int"
-  <type> = "string”
-  <type> = "bool"
-  <var_ident> = <ident>
-  <reserved_keywords = "var" | "for" | "end" | "in" | "do" | "read" |
-                      "print" | "int" | "string" | "bool" | "assert"
+  <prog> ::= <stmnts>
+  <stmts> ::= <stmnt> ";" <stmnts>
+  <stmnts> ::= <epsilon>
+  <stmnt> ::= "var" <identifier> : <type> <assign_value>
+  <stmnt> ::= <identifier> ":=" <expr>
+  <stmnt> ::= "for" <identifier> "in" <expr> .. <expr> "do" <stmnts> end for
+  <stmnt> ::= "read" <identifier> 
+  <stmnt> ::=  "print" <expr>
+  <stmnt> ::= "assert" ( <expr> )
+  <assign_value> = := <expr>| <epsilon>
+  <expr> ::= <opnd> <op> <opnd>
+  <expr> ::= <unary_op> <opnd>
+  <opnd> ::= <integer>
+  <opnd> ::= <string_literal>
+  <opnd> ::= <identifier>
+  <opnd> ::= ( <expr> )
+  <type> ::= "int"
+  <type> ::= "string"
+  <type> ::= "bool"
+
   \end{verbatim}
 \end{figure}
 
@@ -167,6 +196,16 @@ another symbol next, that is in its first set.
 
 Semantic errors are discovered by TypeCheckVisitor.
 These errors are printed to the user and prevent the interpreting process.
+
+\subsection{Semantics of Mini-pl}
+
+I have adjusted the semantics of Mini-pl a bit. In the specification
+it seems that the loop variable should be one over the upper limit of the 
+specified range. In my implementation when the loop ends, the loop variable
+is the upper limit of the range. In essence my range is a open interval.
+
+As for variable default values I have chosen 0 for integer, empty string for string, and 
+false for boolean.
 
 \section{Work hour log}
 

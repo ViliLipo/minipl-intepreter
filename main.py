@@ -4,7 +4,6 @@ from interpreter.scanner import Scanner
 from interpreter.parser import Parser
 from interpreter.interpretingvisitor import InterpretingVisitor
 from interpreter.typecheckvisitor import TypeCheck
-from interpreter.printvisitor import PrintVisitor
 
 
 def header():
@@ -44,6 +43,10 @@ def main():
                 run(ast, errors)
             else:
                 for error in errors:
+                    print(error)
+                tc = TypeCheck()
+                ast.accept(tc)
+                for error in tc.errors:
                     print(error)
 
         else:
