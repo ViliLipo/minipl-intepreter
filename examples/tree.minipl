@@ -1,0 +1,36 @@
+var height: int;
+print("How tall tree you want?");
+read height;
+height := height - 1;
+var width: int := 1;
+var maxwidth: int := 1;
+var i : int;
+for i in 1..height do
+  maxwidth := maxwidth + 2;
+end for;
+var result: string := "";
+for i in 1..height do
+  var layer: int := maxwidth - width;
+  var s: string := "";
+  var j : int;
+  for j in 0..(layer/2) do
+    s := s + " ";
+  end for;
+  for j in 1..width do
+    s := s + "*";
+  end for;
+  for j in 0..(layer/2) do
+    s := s + " ";
+  end for;
+  width := width + 2;
+  print(s + "\n");
+end for;
+s := "";
+for i in 0..(maxwidth-1)/2 do
+  s := s + " ";
+end for;
+s := s + "*";
+for i in 0..(maxwidth-1)/2 do
+  s := s + " ";
+end for;
+print(s + "\n");

@@ -26,6 +26,7 @@ class Scanner:
 
     def __init__(self, src):
         self.src = src
+        # These scanner functions are called in order
         self.scanFuncs = [
             Scanner.scanIdentifierOrKeyword,
             Scanner.scanNumber,
@@ -45,13 +46,13 @@ class Scanner:
         except LexicalError:
             return errortoken
         if self.src.eof():
+            position = self.src.getCurrentPosition()
             return Token('eof', '', position, position)
-        position = self.src.getCurrentPosition()
         for func in self.scanFuncs:
             possibleToken = func(self.src)
             if possibleToken is not False:
                 return possibleToken
-        self.src.getChar()  # discard bad character
+        self.src.getChar()  # discard a bad character
         return errortoken
 
     def screening(self):

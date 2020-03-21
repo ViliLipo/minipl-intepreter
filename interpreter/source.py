@@ -10,7 +10,7 @@ class Source:
             self.lines.append(line)
         f.close()
 
-    def handleLine(self):
+    def __handleline__(self):
         if self.columnNumber >= len(self.lines[self.rowNumber]):
             self.rowNumber = self.rowNumber + 1
             self.columnNumber = 0
@@ -20,10 +20,10 @@ class Source:
 
     def getChar(self):
         if self.eof():
-            return False
+            return ''
         char = self.lines[self.rowNumber][self.columnNumber]
         self.columnNumber = self.columnNumber + 1
-        self.handleLine()
+        self.__handleline__()
         return char
 
     def peek(self):
@@ -33,11 +33,16 @@ class Source:
             elif self.rowNumber + 1 < len(self.lines):
                 return self.lines[self.rowNumber + 1][0]
             else:
-                return False
+                return ''
         else:
-            return False
+            return ''
 
     def getCurrentPosition(self):
+        """
+        Get current cursor position of source.
+        These indexes start from 1, to ease in
+        error correction from a buffer.
+        """
         return (self.columnNumber + 1, self.rowNumber + 1)
 
     def reverseOnePosition(self):
@@ -48,7 +53,3 @@ class Source:
             self.columnNumber = len(self.lines[self.rowNumber]) - 1
         else:
             self.columnNumber = self.columnNumber - 1
-
-    def setCurrentPosition(self, column, row):
-        self.columnNumber = column - 1
-        self.rowNumber = row - 1

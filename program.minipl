@@ -1,3 +1,0 @@
-var s : string := "\\\"Hello World\"\n";
-print s;
-print "Hello World!\n";
